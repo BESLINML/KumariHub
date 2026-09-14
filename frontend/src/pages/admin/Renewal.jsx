@@ -70,7 +70,11 @@ const Renewal = () => {
               buttonOnClick={() => window.open(`/admin-dashBoard/business/${item._id}`, '_blank')}
               businessIMG={item.img}
               businessName={item.businessName}
-              dis={`${item.location} • ${item.category}`}
+              businessStatus={item.status}
+              category={item.category}
+              createdAt={item.createdAt}
+              location={item.location}
+              renewalat={item.expDate}
             />
           ))
         ) : (

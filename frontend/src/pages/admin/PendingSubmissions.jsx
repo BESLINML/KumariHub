@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAdmin } from '../../context/AdminContext';
+import { useNavigate } from 'react-router-dom';
 
 const PendingSubmissions = () => {
   const API_URL = import.meta.env.VITE_API_URL;
   const { businesses, refreshData } = useAdmin();
+  const navigate = useNavigate();
 
   const [todaysListings, setTodaysListings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,22 +19,78 @@ const PendingSubmissions = () => {
     }
   }, [businesses]);
 
-  const handleApprove = async (id) => {
+  // const handleApprove = async (id) => {
+  //   try {
+  //     const response = await fetch(`${API_URL}/api/businesses/approve/${id}`, {
+  //       method: 'PUT',
+  //     });
+
+  //     if (response.ok) {
+  //       alert("Business approved successfully!");
+  //       refreshData();
+
+  //       // Database-la irunthu varra category, location, businessName-ai vachi URL-ai generate panrathu
+  //       const savedCategory = data.category || data.business?.category || finalCategory;
+  //       const savedLocation = data.location || data.business?.location || finalLocation;
+  //       const savedName = data.businessName || data.business?.businessName || formData.businessName;
+
+  //       // URL-kku anuppa spaces-ai hyphen (-) ah maathurathu (slug format)
+  //       const createSlug = (str) => str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+  //       if (savedCategory && savedLocation && savedName) {
+  //         const catSlug = createSlug(savedCategory);
+  //         const locSlug = createSlug(savedLocation);
+  //         const nameSlug = createSlug(savedName);
+
+  //         // Neenga sonna model link format-laye redirect aagum!
+  //         navigate(`/${catSlug}/${locSlug}/${nameSlug}`);
+  //       }
+  //     } else {
+  //       alert("Failed to approve business");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error approving:", error);
+  //   }
+  // };
+
+  const handleApprove = async (business) => { // <--- Inga business object-ai parameters-ah pass panrom
     try {
-      const response = await fetch(`${API_URL}/api/businesses/approve/${id}`, {
+      const response = await fetch(`${API_URL}/api/businesses/approve/${business._id}`, {
         method: 'PUT',
       });
+
+      const data = await response.json(); // <--- Response data-ai catch panrom
 
       if (response.ok) {
         alert("Business approved successfully!");
         refreshData();
+        
+        // Backend data-va illa pasing pannura business object-ai fallback-ah use panrathu
+        const savedCategory = data.category || data.business?.category || business.category;
+        const savedLocation = data.location || data.business?.location || business.location;
+        const savedName = data.businessName || data.business?.businessName || business.businessName;
+
+        // URL-kku anuppa spaces-ai hyphen (-) ah maathurathu (slug format)
+        const createSlug = (str) => str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+        if (savedCategory && savedLocation && savedName) {
+          const catSlug = createSlug(savedCategory);
+          const locSlug = createSlug(savedLocation);
+          const nameSlug = createSlug(savedName);
+
+          // Pending page-la irunthu antha approved business profile page-kku redirect aagum!
+          navigate(`/${catSlug}/${locSlug}/${nameSlug}`);
+        }
       } else {
-        alert("Failed to approve business");
+        alert(data.message || "Failed to approve business");
       }
     } catch (error) {
       console.error("Error approving:", error);
+      alert("Server error!");
     }
   };
+
+
 
   const handleDelete = async (id) => {
     try {
@@ -83,7 +141,7 @@ const PendingSubmissions = () => {
               <div className="mt-4 pt-3 border-t border-gray-200/60 flex items-center justify-between gap-2">
                 <div className="flex gap-2">
                   <button
-                    onClick={() => handleApprove(business._id)}
+                    onClick={() => handleApprove(business)}
                     className="bg-emerald-600 text-white text-[11px] px-3 py-1.5 rounded-full font-semibold hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs"
                   >
                     Approve

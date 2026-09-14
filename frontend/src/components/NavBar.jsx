@@ -1,8 +1,8 @@
 import { MoveRightIcon, Search } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom';
-import Button from './Button';
 import SearchBox from './SearchBox';
+import ListYourBusinessButton from './ListYourBusinessButton';
 
 const NavBar = ({ onScrollToBusiness }) => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -34,26 +34,29 @@ const NavBar = ({ onScrollToBusiness }) => {
 
   return (
     <nav className={navVisibilityClass}>
-      <div className="flex flex-col md:flex-row items-center justify-between gap-3 px-4 lg:px-10 bg-[#FCF7EF] py-2 md:h-15 shadow-sm transition-all">
+      <div className="flex items-center justify-between gap-3 px-4 lg:px-10 bg-[#FCF7EF] py-2 md:h-15 shadow-sm transition-all">
 
         {/* Top/Main Row for Logo and Actions */}
-        <div className="flex items-center justify-between w-full md:w-auto h-11 md:h-full">
-          <p className="text-[#DBA55C] font-bold font-serif lg:w-40 text-sm md:text-base">
+        <div className="flex items-center justify-between w-auto h-11 md:h-full">
+          <p className="text-[#DBA55C] font-bold font-serif lg:w-40 text-sm md:text-lg flex">
             Kumari <span className="text-black">HUB</span>
           </p>
 
-          <div className="flex items-center gap-3 md:hidden">
-            {/* Mobile Search Toggle or Direct Action Button */}
-            <Button onclick={onScrollToBusiness} />
-          </div>
         </div>
 
-        <SearchBox />
+        <div className="md:w-full h-10">
+          <SearchBox navbar={true}/>
+        </div>
+        
 
         {/* Desktop Action Button */}
-        <div className="hidden md:block shrink-0">
+        {/* <div className="hidden md:block shrink-0">
           <Button onclick={onScrollToBusiness} />
+        </div> */}
+        <div className="hidden md:block shrink-0">
+          <ListYourBusinessButton navbar={true} />
         </div>
+        
 
       </div>
     </nav>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, Tag, Store, MoveRightIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const SearchBox = () => {
+const SearchBox = ({navbar}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -53,25 +53,21 @@ const SearchBox = () => {
   );
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4 relative text-black">
+    <div className="w-full h-full mx-auto relative text-black">
       {/* Search Input Box */}
-      <div className="flex items-center border border-[#C48E46] bg-white shadow-sm shadow-[#DBA55C]/30 h-11 md:h-10 rounded-full px-3 gap-2">
-        <div className="ps-2 flex items-center justify-center w-full gap-3">
-          <Search className='w-4 md:w-5 text-gray-500 shrink-0' />
+      <div className={`flex items-center border shadow-sm shadow-[#DBA55C]/20 h-full rounded-full px-3 gap-2 ${navbar ? "border-[#664a26]/10 bg-white" : "border-[#664a26]"}`}>
+        <div className="md:ps-2 flex items-center justify-center w-full gap-3">
+          <Search className={`w-4 md:w-5 shrink-0 ${navbar?"text-black/60":" text-white/70"}`} />
           <input
             type="text"
             value={searchTerm}
             onChange={handleSearch}
             placeholder="Search for businesses, categories, or locations..."
-            className='w-full text-xs md:text-sm lg:text-base placeholder:font-medium outline-none bg-transparent text-gray-800'
-          />
+            className={`w-full text-[10px] md:text-sm lg:text-ba placeholder:font-semibold outline-none bg-transparent ${navbar?"text-black":" text-white"}`} />
         </div>
 
-        <div
-
-          className="flex justify-center items-center bg-[#DBA55C] rounded-full w-10 h-8 md:w-12 md:h-8 shrink-0 cursor-pointer hover:bg-[#c48e46] transition-colors"
-        >
-          <MoveRightIcon className="w-4 md:w-5 text-white" />
+        <div className={`hidden md:flex justify-center items-center bg-[#DBA55C] rounded-full shrink-0 cursor-pointer hover:bg-[#c48e46] transition-colors ${navbar ? "w-13 h-7" : "w-10 md:w-17 h-10 "}`}>
+          <MoveRightIcon onClick={handleSearch} className={`text-black ${navbar ? "" : "w-4 md:w-5 "}`} />
         </div>
       </div>
 

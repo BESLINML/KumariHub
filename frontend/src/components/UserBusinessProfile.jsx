@@ -4,6 +4,7 @@ import {
   Star, MapPin, Phone, MessageCircle, ShieldCheck, Clock,
   User, Globe, Share2, Award, ThumbsUp, Headphones, Send, Link2
 } from 'lucide-react';
+import BusinessSEO from './BusinessSEO';
 
 export default function UserBusinessProfile() {
   const { category, location, businessName } = useParams();
@@ -51,7 +52,7 @@ export default function UserBusinessProfile() {
     e.preventDefault();
 
     if (!newReview.userName || !newReview.comment) {
-      return alert("Ella fields-ayum fill pannunga!");
+      return alert("Full every fields");
     }
 
     try {
@@ -106,6 +107,7 @@ export default function UserBusinessProfile() {
 
   return (
     <div className="bg-[#f4f5f7] min-h-screen py-8 font-sans">
+      <BusinessSEO business={business}/>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
 
         {/* LEFT & CENTER: Main Business Section */}
@@ -162,9 +164,6 @@ export default function UserBusinessProfile() {
                     <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">{business.businessName}</h1>
                     <p className="text-gray-500 text-xs sm:text-sm mt-1 flex items-center gap-1">
                       <MapPin className="w-4 h-4 text-orange-500 shrink-0" /> {business.address}, {business.location}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1 flex items-center gap-1 font-medium">
-                      <User className="w-3.5 h-3.5 text-gray-400" /> Owner: <span className="text-gray-800 font-bold">{business.ownerName || 'Bala Ram S'}</span>
                     </p>
                   </div>
                 </div>

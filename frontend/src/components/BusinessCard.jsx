@@ -64,8 +64,8 @@ const BusinessCard = ({
     }
 
     return (
-        <section>
-            <div className="bg-white rounded-4xl shadow-sm border border-gray-100 overflow-hidden">
+        <section className="">
+            <div className="bg-white rounded-4xl shadow-sm border border-gray-100 overflow-hidden hover:-translate-y-2 hover:border-[#DBA55C] hover:shadow-2xl duration-500 transition-all">
 
                 {/* Image & Tags Section */}
                 <div className="relative h-40 overflow-hidden">
@@ -74,13 +74,13 @@ const BusinessCard = ({
                         alt={bussinessName || "Business Image"}
                         className="rounded-t-4xl w-full h-full object-cover object-center"
                     />
-                    <p className="absolute bottom-3 left-3 flex items-center gap-1.5 bg-[#1C1813] text-[#DBA55C] text-xs font-medium rounded-full px-2.5 py-0.5 shadow-md">
-                        <Tag className="w-3.5 h-3.5 text-[#DBA55C] shrink-0" />
+                    <p className="absolute bottom-3 left-3 flex items-center gap-1.5 bg-[#424345] text-[#F5E1B0] text-xs font-medium rounded-full px-2.5 py-0.5 shadow-md">
+                        <Tag className="w-3.5 h-3.5 text-[#F5E1B0] shrink-0" />
                         <span className="truncate max-w-30">{categories}</span>
                     </p>
                     <p className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-[#1C1813] text-[#DBA55C] text-xs font-medium rounded-full px-2.5 py-0.5 shadow-md">
-                        <LucideLollipop className="w-3.5 h-3.5 text-[#DBA55C] shrink-0" />
-                        <span className="truncate max-w-25">{location}</span>
+                        <LucideLollipop className="w-3.5 h-3.5 text-[#F5E1B0] shrink-0" />
+                        <span className="truncate max-w-25 text-[#F5E1B0]">{location}</span>
                     </p>
                 </div>
 
@@ -91,7 +91,7 @@ const BusinessCard = ({
                             <Store className="w-5 h-5 text-[#DBA55C] shrink-0" />
                             <button
                                 onClick={onclick}
-                                className="text-lg sm:text-xl md:text-2xl font-serif text-[#DBA55C] hover:underline cursor-pointer text-left truncate w-full"
+                                className="text-lg font-[650] text-gray-800 hover:text-[#DBA55C] cursor-pointer text-left truncate "
                             >
                                 {bussinessName}
                             </button>
@@ -147,7 +147,7 @@ const BusinessCard = ({
                                 rel="noopener noreferrer"
                                 className="flex items-center justify-center gap-1 text-[11px] sm:text-xs font-medium border border-sky-300 text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-full transition py-1.5 px-1 truncate shadow-2xs"
                             >
-                                <img src={whatsapp} className="w-3 h-3 shrink-0" alt="whatsapp" /> WA
+                                <img src={whatsapp} className="w-3 h-3 shrink-0" alt="whatsapp" />WhatsApp
                             </a>
                         ) : (
                             <button disabled className="flex items-center justify-center gap-1 text-[11px] sm:text-xs font-medium border border-gray-200 text-gray-400 bg-gray-50 rounded-full py-1.5 px-1 cursor-not-allowed">

@@ -1,12 +1,61 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAdmin } from '../../context/AdminContext';
+import BusinessProfileCard from '../../components/BusinessProfileCard'; // Path-ai ungaloda project-ku etha maatri check pannikonga
 
 const Dashboard = () => {
-
-  const { businesses, category, locationsList } = useAdmin();
+  const { businesses, category, locationsList, handleApprove, handleDelete } = useAdmin();
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+
+  // 1. New Filter States
+  const [searchName, setSearchName] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('');
+// 2. Filter logic for Businesses list search, filters & date range
+  const filteredBusinessesList = useMemo(() => {
+    if (!businesses) return [];
+
+    return businesses.filter((b) => {
+      // Search match (Business Name OR Category OR Location la match aaganum)
+      const matchesSearch = searchName
+        ? (b.businessName?.toLowerCase().includes(searchName.toLowerCase()) ||
+           b.category?.toLowerCase().includes(searchName.toLowerCase()) ||
+           b.location?.toLowerCase().includes(searchName.toLowerCase()))
+        : true;
+
+      // Category dropdown match
+      const matchesCategory = selectedCategory
+        ? b.category === selectedCategory
+        : true;
+
+      // Location dropdown match
+      const matchesLocation = selectedLocation
+        ? b.location === selectedLocation
+        : true;
+
+      // Date Range match (createdAt / date)
+      let matchesDate = true;
+      if (startDate || endDate) {
+        const itemDate = new Date(b.createdAt || b.date);
+        itemDate.setHours(0, 0, 0, 0);
+
+        if (startDate) {
+          const start = new Date(startDate);
+          start.setHours(0, 0, 0, 0);
+          if (itemDate < start) matchesDate = false;
+        }
+
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          if (itemDate > end) matchesDate = false;
+        }
+      }
+
+      return matchesSearch && matchesCategory && matchesLocation && matchesDate;
+    });
+  }, [businesses, searchName, selectedCategory, selectedLocation, startDate, endDate]);
 
   const stats = useMemo(() => {
     if (!businesses) return {
@@ -71,6 +120,8 @@ const Dashboard = () => {
       revenue: calculatedRevenue,
     };
   }, [businesses, category, locationsList, startDate, endDate]);
+
+console.log("filteredBusinessesList",filteredBusinessesList)
 
   if (!businesses) {
     return <div className="p-6 text-center text-gray-500">Loading dashboard...</div>;
@@ -169,6 +220,102 @@ const Dashboard = () => {
         </div>
 
       </div>
+
+      {/* Businesses Search & Filter Section */}
+      <div className="mb-6">
+        <h1 className="text-xl sm:text-2xl font-serif font-bold text-[#1C1813] mb-4">Businesses List</h1>
+        <div className="bg-white p-4 rounded-2xl shadow-xs border border-gray-200">
+          <div className="flex flex-col md:flex-row gap-3 items-center">
+            
+            {/* Search by Business Name */}
+            <input 
+              type="text"
+              placeholder="Search by business name..."
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
+              className="text-xs border border-gray-300 p-2.5 rounded-xl outline-none focus:border-[#D4AF37] w-full md:flex-1 bg-white"
+            />
+
+            {/* Category Dropdown */}
+<select 
+  value={selectedCategory}
+  onChange={(e) => setSelectedCategory(e.target.value)}
+  className="text-xs border border-gray-300 p-2.5 rounded-xl outline-none focus:border-[#D4AF37] w-full md:w-48 bg-white"
+>
+  <option value="">All Categories</option>
+  {category && category.map((cat, idx) => {
+    const catName = typeof cat === 'string' ? cat : (cat.name || cat.category || cat.categoryName);
+    
+    // Intha category-la eththanai businesses irukku nu count panrathu
+    const count = businesses ? businesses.filter(b => b.category === catName).length : 0;
+
+    return (
+      <option key={idx} value={catName}>
+        {catName} ({count})
+      </option>
+    );
+  })}
+</select>
+            {/* Location Dropdown */}
+          {/* Location Dropdown */}
+<select 
+  value={selectedLocation}
+  onChange={(e) => setSelectedLocation(e.target.value)}
+  className="text-xs border border-gray-300 p-2.5 rounded-xl outline-none focus:border-[#D4AF37] w-full md:w-48 bg-white"
+>
+  <option value="">All Locations</option>
+  {locationsList && locationsList.map((loc, idx) => {
+    const locName = typeof loc === 'string' ? loc : (loc.locationName || loc.name || loc.location);
+    
+    // Intha location-la eththanai businesses irukku nu count panrathu
+    const count = businesses ? businesses.filter(b => b.location === locName).length : 0;
+
+    return (
+      <option key={idx} value={locName}>
+        {locName} ({count})
+      </option>
+    );
+  })}
+</select>
+
+            {/* Clear All Filters Button */}
+            <button
+              onClick={() => {
+                setSearchName('');
+                setSelectedCategory('');
+                setSelectedLocation('');
+              }}
+              className="text-xs font-semibold bg-gray-100 text-gray-600 px-4 py-2.5 rounded-xl hover:bg-gray-200 transition-colors w-full md:w-auto cursor-pointer"
+            >
+              Clear All
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Render Filtered Businesses using BusinessProfileCard */}
+      <div className="mt-4 flex flex-col gap-3">
+        {filteredBusinessesList && filteredBusinessesList.length > 0 ? (
+          filteredBusinessesList.map((business) => (
+            <BusinessProfileCard 
+              key={business._id}
+              businessIMG={business.img}
+              businessName={business.businessName}
+              businessStatus={business.status}
+              category={business.category}
+              location={business.location}
+              createdAt={business.createdAt}
+              renewalat={business.expiryDate}
+              buttonOnClick={() => window.open(`/admin-dashBoard/business/${business._id}`, '_blank')}
+            />
+          ))
+        ) : (
+          <p className="text-xs text-gray-500 text-center py-6 bg-white rounded-2xl border border-gray-200">
+            No businesses found.
+          </p>
+        )}
+      </div>
+
     </div>
   );
 };

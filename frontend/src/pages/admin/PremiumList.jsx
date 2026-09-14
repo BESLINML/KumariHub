@@ -56,11 +56,14 @@ const PremiumList = () => {
           currentList.map((item) => (
             <BusinessProfileCard
               key={item._id}
+              category={item.category}
+              location={item.location}
+              createdAt={item.createdAt}
+              renewalat={item.expiryDate}
               buttonOnClick={() => window.open(`/admin-dashBoard/business/${item._id}`, '_blank')}
               businessIMG={item.img}
               businessName={item.businessName}
               businessStatus={item.status}
-              dis={`${item.location} • ${item.category}`}
             />
           ))
         ) : (

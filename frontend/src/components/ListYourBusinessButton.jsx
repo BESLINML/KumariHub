@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { handlePayment } from '../utils/payment';
 
-const ListYourBusinessButton = () => {
+const ListYourBusinessButton = ({navbar}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [categoriesList, setCategoriesList] = useState([]);
   const [locationsList, setLocationsList] = useState([]);
@@ -93,36 +94,104 @@ const ListYourBusinessButton = () => {
   };
 
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const finalCategory = formData.category === "Other" ? formData.customCategory : formData.category;
-    const finalLocation = formData.location === "Other" ? formData.customLocation : formData.location;
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   const finalCategory = formData.category === "Other" ? formData.customCategory : formData.category;
+  //   const finalLocation = formData.location === "Other" ? formData.customLocation : formData.location;
 
-    const formattedServices = formData.services
-      ? formData.services.split(',').map(s => s.trim()).filter(Boolean)
-      : [];
+  //   const formattedServices = formData.services
+  //     ? formData.services.split(',').map(s => s.trim()).filter(Boolean)
+  //     : [];
 
-    const newSubmission = {
-      ownerName: formData.ownerName,
-      businessName: formData.businessName,
-      category: finalCategory,
-      location: finalLocation,
-      address: formData.address,
-      aboutBusness: formData.aboutBusness,
-      phone: Number(formData.phone),
-      whatsapp: Number(formData.whatsapp) || Number(formData.phone),
-      locationLink: formData.locationLink || "",
-      services: formattedServices,
-      img: formData.img || "",
-      timing: formData.timing,
-      status: "pending",
-      premium: false,
-      reviewCount: 0,
-      avgRating: 0,
-      busnessReview: []
-    };
+  //   const newSubmission = {
+  //     ownerName: formData.ownerName,
+  //     businessName: formData.businessName,
+  //     category: finalCategory,
+  //     location: finalLocation,
+  //     address: formData.address,
+  //     aboutBusness: formData.aboutBusness,
+  //     phone: Number(formData.phone),
+  //     whatsapp: Number(formData.whatsapp) || Number(formData.phone),
+  //     locationLink: formData.locationLink || "",
+  //     services: formattedServices,
+  //     img: formData.img || "",
+  //     timing: formData.timing,
+  //     status: "pending",
+  //     premium: false,
+  //     reviewCount: 0,
+  //     avgRating: 0,
+  //     busnessReview: []
+  //   };
 
+  //   try {
+  //     const response = await fetch(`${API_URL}/api/businesses/add`, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify(newSubmission),
+  //     });
+
+  //     const data = await response.json();
+
+  //     if (response.ok) {
+  //       alert("Business submitted successfully! It is sent to the Admin for approval.");
+  //       setIsOpen(false);
+  //       setFormData({
+  //         ownerName: '', businessName: '', category: '', customCategory: '', location: '', customLocation: '',
+  //         address: '', aboutBusness: '', phone: '', whatsapp: '', locationLink: '', services: '', img: '',
+  //         timing: formData.timing
+  //       });
+  //     } else {
+  //       alert("Error: " + (data.error || "Failed to submit business"));
+  //     }
+  //   } catch (error) {
+  //     console.error("Network Error:", error);
+  //     alert("Failed to connect to backend server!");
+  //   }
+  // };
+
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  const finalCategory = formData.category === "Other" ? formData.customCategory : formData.category;
+  const finalLocation = formData.location === "Other" ? formData.customLocation : formData.location;
+
+  const formattedServices = formData.services
+    ? formData.services.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
+
+  const businessBasicData = {
+    ownerName: formData.ownerName,
+    businessName: formData.businessName,
+    category: finalCategory,
+    location: finalLocation,
+    address: formData.address,
+    aboutBusness: formData.aboutBusness,
+    phone: Number(formData.phone),
+    whatsapp: Number(formData.whatsapp) || Number(formData.phone),
+    locationLink: formData.locationLink || "",
+    services: formattedServices,
+    img: formData.img || "",
+    timing: formData.timing,
+    status: "pending",
+    premium: false,
+    reviewCount: 0,
+    avgRating: 0,
+    busnessReview: []
+  };
+
+  // 1. Trigger Razorpay Payment First (₹199)
+  handlePayment(API_URL, { businessName: formData.businessName, phone: formData.phone }, async (paymentResponse) => {
     try {
+      // 2. Add paymentId to the submission object after payment succeeds
+      const newSubmission = {
+        ...businessBasicData,
+        paymentId: paymentResponse.razorpay_payment_id
+      };
+
+      // 3. Send data to backend MongoDB
       const response = await fetch(`${API_URL}/api/businesses/add`, {
         method: 'POST',
         headers: {
@@ -134,7 +203,7 @@ const ListYourBusinessButton = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert("Business submitted successfully! It is sent to the Admin for approval.");
+        alert("Payment successful & Business submitted for Admin approval!");
         setIsOpen(false);
         setFormData({
           ownerName: '', businessName: '', category: '', customCategory: '', location: '', customLocation: '',
@@ -142,14 +211,14 @@ const ListYourBusinessButton = () => {
           timing: formData.timing
         });
       } else {
-        alert("Error: " + (data.error || "Failed to submit business"));
+        alert("Payment successful, but error saving business: " + (data.error || "Failed to submit"));
       }
     } catch (error) {
       console.error("Network Error:", error);
-      alert("Failed to connect to backend server!");
+      alert("Failed to connect to backend server after payment!");
     }
-  };
-
+  });
+};
   const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
   return (
@@ -157,14 +226,14 @@ const ListYourBusinessButton = () => {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="bg-linear-to-r from-[#E6C594] to-[#DBA55C] text-[#1C1813] font-semibold text-sm px-8 py-3.5 rounded-full shadow-[0_0_25px_rgba(219,165,92,0.3)] hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer w-25 md:w-40 lg:w-70"
+        className="bg-linear-to-r from-[#E6C594] to-[#DBA55C] text-[#1C1813] font-bold lg:px-10 px-4 py-2 text-[10px] md:text-sm lg:text-base rounded-full hover:scale-95 hover:shadow-lg hover:shadow-amber-300/25 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer lg:w-70"
       >
-        <span className="bg-[#1C1813] text-[#DBA55C] rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">+</span>
+        <span className="bg-[#1C1813] text-[#DBA55C] rounded-full w-3 h-3 text-center md:w-5 md:h-5 flex items-center justify-center text-xs font-bold">+</span>
         List Your Business
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 w-full h-full bg-black/40 backdrop-blur-md z-50 overflow-y-auto flex flex-col justify-center items-center p-4 lg:p-10">
+        <div className={`fixed inset-0 bg-black/40 backdrop-blur-md z-50 overflow-y-auto flex flex-col justify-center items-center p-4 lg:p-10 ${navbar ? "w-screen h-screen" : "w-full h-full"}`}>
           <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none">
 
             <div className="sticky top-0 bg-[#FCF7EF] border-b border-gray-200 px-6 lg:px-12 py-4 flex items-center justify-between z-10">

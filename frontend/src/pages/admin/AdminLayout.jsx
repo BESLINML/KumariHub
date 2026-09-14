@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react'
 import AdminSlideBar from './AdminSlideBar'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { useAdmin } from '../../context/AdminContext';
 import { X, Clock, ImageIcon } from 'lucide-react';
 
 const AdminLayout = () => {
   const API_URL = import.meta.env.VITE_API_URL;
+  const navigate = useNavigate();
 
   const {
     businesses,
     fetchAdminData,
+    loading,
+    loadPercentage
   } = useAdmin();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -155,6 +158,24 @@ const AdminLayout = () => {
           address: '', aboutBusness: '', phone: '', whatsapp: '', locationLink: '', img: '', services: '', premium: false,
           timing: formData.timing
         });
+
+        // Database-la irunthu varra category, location, businessName-ai vachi URL-ai generate panrathu
+        const savedCategory = data.category || data.business?.category || finalCategory;
+        const savedLocation = data.location || data.business?.location || finalLocation;
+        const savedName = data.businessName || data.business?.businessName || formData.businessName;
+
+        // URL-kku anuppa spaces-ai hyphen (-) ah maathurathu (slug format)
+        const createSlug = (str) => str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+        if (savedCategory && savedLocation && savedName) {
+          const catSlug = createSlug(savedCategory);
+          const locSlug = createSlug(savedLocation);
+          const nameSlug = createSlug(savedName);
+
+          // Neenga sonna model link format-laye redirect aagum!
+          navigate(`/${catSlug}/${locSlug}/${nameSlug}`);
+        }
+
       } else {
         alert(data.message || data.error || "Failed to add business");
       }
@@ -232,18 +253,27 @@ const AdminLayout = () => {
       alert("Server error!");
     }
   };
+  
 
   return (
-    <div className="bg-white md:h-screen flex flex-col overflow-hidden">
+    <div className="bg-white md:h-screen flex flex-col overflow-hidden mb-15 md:mb-0">
       <div className='flex flex-col-reverse md:flex-row h-full'>
         {/* Sidebar Fixed Width */}
-        <div className="md:w-[30%] xl:w-[20%] md:h-full shrink-0 fixed md:static z-50">
+        <div className="w-full md:w-[30%] xl:w-[20%] md:h-full shrink-0 fixed md:static z-50">
           <AdminSlideBar setModalType={setModalType} setIsModalOpen={setIsModalOpen} />
         </div>
 
         {/* Main Content Area */}
         <main className="md:w-[70%] xl:w-[80%]">
-          <Outlet />
+          {loading?(
+            <div className="flex justify-center items-center py-10 gap-3 sm:gap-5 h-screen">
+            <div className="w-8 h-8 border-4 border-[#1A2E26]/20 border-t-[#D4AF37] rounded-full animate-spin"></div>
+            <p className="font-bold text-sm text-[#D4AF37]">Loading...{loadPercentage}%</p>
+          </div>
+          ):
+            <Outlet />
+          }
+          
         </main>
       </div>
 

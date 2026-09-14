@@ -18,7 +18,10 @@ const RecentBusinesses = () => {
               <BusinessProfileCard
                 key={b._id || idx}
                 businessName={b.businessName}
-                dis={b.category}
+                location={b.location}
+                createdAt={b.createdAt}
+                renewalat={b.expiryDate}
+                category={b.category}
                 businessIMG={b.img}
                 businessStatus={b.status}
                 buttonOnClick={() => window.open(`/admin-dashBoard/business/${b._id}`, '_blank')}

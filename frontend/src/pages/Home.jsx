@@ -300,16 +300,16 @@ const Home = ({ searchTerm, setSearchTerm }) => {
         {/* Hero Section */}
         <section className="bg-[#1C1813] rounded-b-4xl sm:rounded-b-[3rem] w-full px-4 sm:px-6">
           <div className="max-w-7xl mx-auto flex justify-between items-center py-4 sm:py-5 border-b border-white/10">
-            <p className="text-[#DBA55C] text-xl sm:text-3xl font-bold font-serif">Kumari HUB</p>
+            <p className="text-[#DBA55C] md:text-3xl font-bold font-serif ">Kumari HUB</p>
             <ListYourBusinessButton />
           </div>
 
-          <div className="text-white flex flex-col justify-center items-center space-y-6 sm:space-y-10 py-10 sm:py-15 max-w-4xl mx-auto">
+          <div className="text-white flex flex-col justify-center items-center md:space-y-6 lg:space-y-6 sm:space-y-10 py-10 sm:py-15 max-w-4xl mx-auto">
             <p className="text-[#DBA55C] text-[10px] sm:text-xs font-bold tracking-[2px] flex items-center gap-2 bg-white/10 px-4 sm:px-5 py-1.5 rounded-full">
               <span><MapPinned className="w-3" /></span>KANYAKUMARI DISTRICT
             </p>
 
-            <h1 className="text-center text-4xl sm:text-6xl md:text-7xl font-serif font-bold leading-tight sm:leading-22">
+            <h1 className="text-center text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold leading-tight sm:leading-22 md:leading-13 lg:leading-16  xl:leading-22 w-screen p-3">
               Discover <span className="text-[#DBA55C] inline-block">Local Businesses</span> <br className="hidden sm:block" />In Kanyakumari
             </h1>
 
@@ -317,7 +317,10 @@ const Home = ({ searchTerm, setSearchTerm }) => {
               Restaurants, salons, electricians, Shops & more — trusted businesses in Nagercoil,<br className="hidden md:block" /> Marthandam, Kuzhithurai, Thuckalay, Colachel & More
             </p>
 
-            <SearchBox />
+            <div className="w-60 md:w-xl h-10 md:h-15">
+              <SearchBox />
+            </div>
+            
           </div>
         </section>
 
@@ -378,14 +381,14 @@ const Home = ({ searchTerm, setSearchTerm }) => {
         <PopularCategories category={category} />
 
         {/* Business Listings Section with Filters */}
-        <section ref={businessSectionRef} className="w-[92%] sm:w-[88%] mb-15">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <section ref={businessSectionRef} className="w-[92%] sm:w-[88%]">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8">
             <p className="text-[#1C1813] text-2xl sm:text-3xl font-serif font-bold">
               {selectedCategory === "All" ? "Business Listings" : `${selectedCategory} Businesses`}
             </p>
 
             {/* Filters Bar */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-auto">
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
@@ -462,9 +465,9 @@ const Home = ({ searchTerm, setSearchTerm }) => {
               <div className="flex justify-center mt-8">
                 <button
                   onClick={() => setVisibleCount((prev) => prev + 9)}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-full text-xs sm:text-sm px-6 py-2.5 font-medium transition-all cursor-pointer shadow-sm"
+                  className={`bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-full text-xs sm:text-sm px-6 py-2.5 font-medium transition-all shadow-sm ${(filteredBusinesses.length>visibleCount)?"cursor-pointer" :"cursor-not-allowed hidden"}`}
                 >
-                  Load More...
+                  Load More
                 </button>
               </div>
             </>
@@ -476,7 +479,7 @@ const Home = ({ searchTerm, setSearchTerm }) => {
         </section>
 
         {/* Footer Call-to-action */}
-        <section className="w-[92%] sm:w-[88%] mx-auto my-10">
+        <section className="w-[92%] sm:w-[88%] mx-auto mb-10">
           <div className="bg-[#1C1813] rounded-4xl sm:rounded-[2.5rem] py-10 sm:py-14 px-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden">
             <h2 className="text-[#E6C594] text-2xl sm:text-4xl font-serif font-bold flex items-center gap-2">
               Own a business? <span className="text-xl">✌️</span>
