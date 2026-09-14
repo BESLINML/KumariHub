@@ -5,6 +5,7 @@ const ListYourBusinessButton = ({navbar}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [categoriesList, setCategoriesList] = useState([]);
   const [locationsList, setLocationsList] = useState([]);
+  const [issubmiting, setIsSubmiting] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -153,6 +154,7 @@ const ListYourBusinessButton = ({navbar}) => {
 
 
 const handleSubmit = async (e) => {
+  setIsSubmiting(true)
   e.preventDefault();
   
   const finalCategory = formData.category === "Other" ? formData.customCategory : formData.category;
@@ -217,6 +219,7 @@ const handleSubmit = async (e) => {
       console.error("Network Error:", error);
       alert("Failed to connect to backend server after payment!");
     }
+    setIsSubmiting(false);
   });
 };
   const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -379,7 +382,7 @@ const handleSubmit = async (e) => {
 
                 <div className="flex justify-end gap-4 pt-6 border-t border-gray-200 pb-10">
                   <button type="button" onClick={() => setIsOpen(false)} className="md:px-6 md:py-3 rounded-full text-sm font-semibold text-gray-600 hover:bg-gray-100 cursor-pointer">Cancel</button>
-                  <button type="submit" className="bg-linear-to-r from-[#E6C594] to-[#DBA55C] text-[#1C1813] px-3 md:px-8 py-1 md:py-3 rounded-full text-sm font-semibold cursor-pointer shadow-lg hover:opacity-90">Submit Listing</button>
+                  <button type="submit" className="bg-linear-to-r from-[#E6C594] to-[#DBA55C] text-[#1C1813] px-3 md:px-8 py-1 md:py-3 rounded-full text-sm font-semibold cursor-pointer shadow-lg hover:opacity-90">{issubmiting?"Submiting":"Submit Listing"}</button>
                 </div>
               </form>
             </div>
