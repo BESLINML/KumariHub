@@ -32,4 +32,22 @@ router.post('/add', async (req, res) => {
   }
 });
 
+// 3. Delete location by name
+router.delete('/:name', async (req, res) => {
+  try {
+    const locName = req.params.name;
+    const deletedLocation = await Location.findOneAndDelete({ 
+      locationName: new RegExp(`^${locName}$`, 'i') 
+    });
+
+    if (!deletedLocation) {
+      return res.status(404).json({ message: "Location not found!" });
+    }
+
+    res.status(200).json({ message: "Location deleted successfully!" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

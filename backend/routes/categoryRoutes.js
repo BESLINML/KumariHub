@@ -31,4 +31,21 @@ router.post('/add', async (req, res) => {
   }
 });
 
+router.delete('/:name', async (req, res) => {
+  try {
+    const categoryName = req.params.name;
+    const deletedCategory = await Category.findOneAndDelete({ 
+      name: new RegExp(`^${categoryName}$`, 'i') 
+    });
+
+    if (!deletedCategory) {
+      return res.status(404).json({ message: "Category not found!" });
+    }
+
+    res.status(200).json({ message: "Category deleted successfully!" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

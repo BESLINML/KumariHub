@@ -18,6 +18,7 @@
     "mongodb": "^7.5.0",
     "mongoose": "^9.9.1",
     "node-cron": "^4.6.0",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "razorpay": "^2.9.8"
   }
 }

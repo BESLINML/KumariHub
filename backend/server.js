@@ -5,6 +5,7 @@ const cors = require('cors');
 const cron = require('node-cron');
 const Business = require('./models/Business');
 
+
 dotenv.config();
 
 const app = express();
@@ -59,6 +60,9 @@ app.get('/', (req, res) => {
 
 const dashboardRoutes = require('./routes/dashboardRoutes');
 app.use('/api/admin', dashboardRoutes);
+
+const { createOrder } = require('./utils/paymentController');
+app.post('/api/create-order', createOrder);
 
 
 const PORT = process.env.PORT || 5000;
