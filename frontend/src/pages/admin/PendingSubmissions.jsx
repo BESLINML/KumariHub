@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { adminFetch } from '../../utils/adminFetch';
 import { useAdmin } from '../../context/AdminContext';
 import { useNavigate } from 'react-router-dom';
+import NotificationBar from '../../components/NotificationBar';
 
 const PendingSubmissions = () => {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -19,58 +21,24 @@ const PendingSubmissions = () => {
     }
   }, [businesses]);
 
-  // const handleApprove = async (id) => {
-  //   try {
-  //     const response = await fetch(`${API_URL}/api/businesses/approve/${id}`, {
-  //       method: 'PUT',
-  //     });
 
-  //     if (response.ok) {
-  //       alert("Business approved successfully!");
-  //       refreshData();
-
-  //       // Database-la irunthu varra category, location, businessName-ai vachi URL-ai generate panrathu
-  //       const savedCategory = data.category || data.business?.category || finalCategory;
-  //       const savedLocation = data.location || data.business?.location || finalLocation;
-  //       const savedName = data.businessName || data.business?.businessName || formData.businessName;
-
-  //       // URL-kku anuppa spaces-ai hyphen (-) ah maathurathu (slug format)
-  //       const createSlug = (str) => str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-
-  //       if (savedCategory && savedLocation && savedName) {
-  //         const catSlug = createSlug(savedCategory);
-  //         const locSlug = createSlug(savedLocation);
-  //         const nameSlug = createSlug(savedName);
-
-  //         // Neenga sonna model link format-laye redirect aagum!
-  //         navigate(`/${catSlug}/${locSlug}/${nameSlug}`);
-  //       }
-  //     } else {
-  //       alert("Failed to approve business");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error approving:", error);
-  //   }
-  // };
-
-  const handleApprove = async (business) => { // <--- Inga business object-ai parameters-ah pass panrom
+  const handleApprove = async (business) => {
     try {
-      const response = await fetch(`${API_URL}/api/businesses/approve/${business._id}`, {
+      const response = await adminFetch(`${API_URL}/api/businesses/approve/${business._id}`, {
         method: 'PUT',
       });
 
-      const data = await response.json(); // <--- Response data-ai catch panrom
-
+      const data = await response.json();
       if (response.ok) {
         alert("Business approved successfully!");
         refreshData();
-        
-        // Backend data-va illa pasing pannura business object-ai fallback-ah use panrathu
+
+
         const savedCategory = data.category || data.business?.category || business.category;
         const savedLocation = data.location || data.business?.location || business.location;
         const savedName = data.businessName || data.business?.businessName || business.businessName;
 
-        // URL-kku anuppa spaces-ai hyphen (-) ah maathurathu (slug format)
+
         const createSlug = (str) => str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
         if (savedCategory && savedLocation && savedName) {
@@ -78,7 +46,7 @@ const PendingSubmissions = () => {
           const locSlug = createSlug(savedLocation);
           const nameSlug = createSlug(savedName);
 
-          // Pending page-la irunthu antha approved business profile page-kku redirect aagum!
+
           navigate(`/${catSlug}/${locSlug}/${nameSlug}`);
         }
       } else {
@@ -94,7 +62,7 @@ const PendingSubmissions = () => {
 
   const handleDelete = async (id) => {
     try {
-      const response = await fetch(`${API_URL}/api/businesses/${id}`, {
+      const response = await adminFetch(`${API_URL}/api/businesses/${id}`, {
         method: 'DELETE',
       });
 
@@ -134,7 +102,7 @@ const PendingSubmissions = () => {
                 )}
 
                 <h4 className="font-bold text-sm text-[#1A2E26] line-clamp-1 mb-1">{business.businessName}</h4>
-                <p className="text-[11px] text-[#D4AF37] font-semibold truncate mb-2">{business.category} • {business.location}</p>
+                <p className="text-[11px] text-[#D4AF37] font-semibold truncate mb-2">{business.category} â€¢ {business.location}</p>
                 <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">{business.aboutBusness}</p>
               </div>
 

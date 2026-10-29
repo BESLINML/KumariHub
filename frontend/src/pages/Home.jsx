@@ -1,22 +1,21 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { ArrowLeftCircle, ArrowRightCircle, MapPinned, MoveRightIcon, Phone, Search, Star, Tag } from 'lucide-react';
+import { MapPinned, Phone, Tag } from 'lucide-react';
 import BusinessCard from '../components/BusinessCard.jsx';
 import ListYourBusinessButton from '../components/ListYourBusinessButton.jsx';
 import NavBar from '../components/NavBar.jsx';
 import { useNavigate, Link } from 'react-router-dom';
 import SearchBox from '../components/SearchBox.jsx';
 import PopularCategories from '../components/PopularCategories.jsx';
+import fallbackBusinessImage from '../assets/avif/pexels-photo-1954524.avif';
 
 const Home = ({ searchTerm, setSearchTerm }) => {
   const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
 
   const [businessData, setBusinessData] = useState([]);
-
-  const [premiumUser, setPremiumUser] = useState(() => {
-    const saved = localStorage.getItem('home_premium');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [advertisements, setAdvertisements] = useState([]);
+  const [advertisementIndex, setAdvertisementIndex] = useState(0);
+  const currentAdvertisement = advertisements[advertisementIndex];
 
   const [category, setCategory] = useState(() => {
     const saved = localStorage.getItem('home_categories');
@@ -29,7 +28,34 @@ const Home = ({ searchTerm, setSearchTerm }) => {
   const [visibleCount, setVisibleCount] = useState(9);
 
   const [loading, setLoading] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+    const handleNewAdvertisement = (event) => {
+      if (!event.detail) return;
+      setAdvertisements((current) => [event.detail, ...current.filter((ad) => ad._id !== event.detail._id)]);
+      setAdvertisementIndex(0);
+    };
+
+    fetch(`${API_URL}/api/advertisements`)
+      .then((response) => response.ok ? response.json() : [])
+      .then((data) => { if (isMounted) setAdvertisements(Array.isArray(data) ? data : []); })
+      .catch((error) => console.error('Could not load advertisements:', error));
+
+    window.addEventListener('kumarihub:advertisement-created', handleNewAdvertisement);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('kumarihub:advertisement-created', handleNewAdvertisement);
+    };
+  }, [API_URL]);
+
+  useEffect(() => {
+    if (advertisements.length < 2) return undefined;
+    const interval = window.setInterval(() => {
+      setAdvertisementIndex((index) => (index + 1) % advertisements.length);
+    }, 7000);
+    return () => window.clearInterval(interval);
+  }, [advertisements.length]);
 
   useEffect(() => {
     const fetchMetadata = async () => {
@@ -70,9 +96,6 @@ const Home = ({ searchTerm, setSearchTerm }) => {
         const parsed = JSON.parse(cachedData);
         setBusinessData(parsed);
 
-        const premiums = parsed.filter(item => item.premium === true);
-        setPremiumUser(premiums);
-
       } else {
         try {
           setLoading(true);
@@ -101,29 +124,6 @@ const Home = ({ searchTerm, setSearchTerm }) => {
             });
 
             setBusinessData(activeBusinesses);
-
-            const activePremiums = activeBusinesses
-              .filter((item) => item.premium)
-              .map((item) => ({
-                _id: item._id,
-                businessName: item.businessName,
-                aboutBusness: item.aboutBusness,
-                category: item.category,
-                phone: item.phone,
-                avgRating: item.avgRating,
-                reviewCount: item.reviewCount,
-                img: item.img,
-                location: item.location,
-                premium: item.premium
-              }));
-
-            const localPremiums = localStorage.getItem('home_premium');
-            const parsedLocalPremiums = localPremiums ? JSON.parse(localPremiums) : [];
-
-            if (JSON.stringify(activePremiums) !== JSON.stringify(parsedLocalPremiums)) {
-              setPremiumUser(activePremiums);
-              localStorage.setItem('home_premium', JSON.stringify(activePremiums));
-            }
 
             const initialOptimized = activeBusinesses.map((item) => ({
               _id: item._id,
@@ -201,28 +201,6 @@ const Home = ({ searchTerm, setSearchTerm }) => {
             setBusinessData(allActiveBusinesses);
             sessionStorage.setItem('home_businesses', JSON.stringify(optimizedBusinesses));
 
-            const activePremiums = allActiveBusinesses
-              .filter((item) => item.premium)
-              .map((item) => ({
-                _id: item._id,
-                businessName: item.businessName,
-                aboutBusness: item.aboutBusness,
-                category: item.category,
-                phone: item.phone,
-                avgRating: item.avgRating,
-                reviewCount: item.reviewCount,
-                img: item.img,
-                location: item.location,
-                premium: item.premium
-              }));
-
-            const localPremiums = localStorage.getItem('home_premium');
-            const parsedLocalPremiums = localPremiums ? JSON.parse(localPremiums) : [];
-
-            if (JSON.stringify(activePremiums) !== JSON.stringify(parsedLocalPremiums)) {
-              setPremiumUser(activePremiums);
-              localStorage.setItem('home_premium', JSON.stringify(activePremiums));
-            }
           }
         } catch (bgError) {
           console.error("Background fetch error:", bgError);
@@ -232,27 +210,9 @@ const Home = ({ searchTerm, setSearchTerm }) => {
 
     fetchBusinesses();
   }, [API_URL]);
-  useEffect(() => {
-    if (premiumUser.length === 0) return;
-    const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % premiumUser.length);
-    }, 2500);
-    return () => clearInterval(interval);
-  }, [premiumUser]);
-
   const businessSectionRef = useRef(null);
   const scrollToBusiness = () => {
     businessSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleNext = () => {
-    if (premiumUser.length === 0) return;
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % premiumUser.length);
-  };
-
-  const handlePrev = () => {
-    if (premiumUser.length === 0) return;
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + premiumUser.length) % premiumUser.length);
   };
 
   const filteredBusinesses = businessData.filter((business) => {
@@ -286,7 +246,22 @@ const Home = ({ searchTerm, setSearchTerm }) => {
 
   };
 
-  const currentItem = premiumUser.length > 0 ? premiumUser[currentIndex] : null;
+  const handleAdvertisementClick = (advertisement) => {
+    if (!advertisement) return;
+    const matchingBusiness = businessData.find((business) =>
+      business.businessName?.trim().toLowerCase() === advertisement.companyName?.trim().toLowerCase() &&
+      business.location?.trim().toLowerCase() === advertisement.place?.trim().toLowerCase()
+    ) || businessData.find((business) =>
+      business.businessName?.trim().toLowerCase() === advertisement.companyName?.trim().toLowerCase()
+    );
+    const business = matchingBusiness || {
+      businessName: advertisement.companyName,
+      category: advertisement.category,
+      location: advertisement.place,
+    };
+    const slug = (value) => value ? value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : '';
+    navigate(`/${slug(business.category)}/${slug(business.location)}/${slug(business.businessName)}`);
+  };
 
   return (
     <div className="overflow-x-hidden">
@@ -294,10 +269,12 @@ const Home = ({ searchTerm, setSearchTerm }) => {
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         onScrollToBusiness={scrollToBusiness}
+        advertisement={currentAdvertisement}
+        onAdvertisementClick={handleAdvertisementClick}
       />
 
       <div className="flex flex-col items-center gap-6 md:gap-10">
-        {/* Hero Section */}
+
         <section className="bg-[#1C1813] rounded-b-4xl sm:rounded-b-[3rem] w-full px-4 sm:px-6">
           <div className="max-w-7xl mx-auto flex justify-between items-center py-4 sm:py-5 border-b border-white/10">
             <p className="text-[#DBA55C] md:text-3xl font-bold font-serif ">Kumari HUB</p>
@@ -320,49 +297,31 @@ const Home = ({ searchTerm, setSearchTerm }) => {
             <div className="w-60 md:w-xl h-10 md:h-15">
               <SearchBox />
             </div>
-            
+
           </div>
         </section>
 
-        {/* Premium Banner Section */}
+
         <section className="bg-[#1C1813] w-[92%] sm:w-[88%] h-150 md:h-60 rounded-3xl py-6 px-4 sm:px-8">
           <div className="w-full h-full flex flex-col md:flex-row items-center justify-between gap-6">
-            {currentItem ? (
+            {currentAdvertisement ? (
               <div className="w-full md:w-[70%] text-white flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5 transition-all duration-300 overflow-hidden text-center sm:text-left">
-                <img src={currentItem.img || demo} className="w-24 h-24 sm:w-30 sm:h-30 object-cover object-center rounded-full shrink-0" />
-                <div className="space-y-2 w-full">
-                  <button onClick={() => handleCardClick(currentItem)} className="text-[#DBA55C] text-xl sm:text-3xl font-bold font-serif overflow-hidden cursor-pointer hover:underline transition-all duration-300 block w-full sm:w-auto truncate">{currentItem.businessName}</button>
-                  <p className="text-amber-100/70 text-xs sm:text-sm max-w-xl">
-                    {currentItem.aboutBusness && currentItem.aboutBusness.length > 180
-                      ? `${currentItem.aboutBusness.slice(0, 180)}...`
-                      : currentItem.aboutBusness}
-                  </p>
+                <img src={currentAdvertisement.coverPhoto || fallbackBusinessImage} alt={currentAdvertisement.companyName || 'Advertisement'} className="w-32 h-28 sm:w-44 sm:h-36 object-cover object-center rounded-2xl shrink-0" />
+                <div className="space-y-2 w-full min-w-0">
+                  <p className="text-[#DBA55C] text-xs uppercase tracking-widest">Featured Advertisement</p>
+                  <h2 className="text-xl sm:text-3xl font-bold font-serif truncate">{currentAdvertisement.companyName}</h2>
+                  <p className="text-amber-100/70 text-xs sm:text-sm max-w-xl line-clamp-3">{currentAdvertisement.description}</p>
                   <div className="flex flex-wrap gap-3 sm:gap-5 items-center justify-center sm:justify-start text-amber-100/70 font-light text-xs pt-1">
-                    <p className="flex gap-2 items-center">
-                      <span className="text-black"><Tag className="w-4" fill="#DBA55C" /></span>
-                      {currentItem.category}
-                    </p>
-                    <p className="flex gap-2 items-center">
-                      <span className="text-[#DBA55C]"><Phone className="w-3" fill="#DBA55C" /></span>
-                      +91 {currentItem.phone}
-                    </p>
-                    <div className="flex items-baseline gap-1 bg-[#DBA55C]/50 px-3 py-0.5 rounded-full text-white">
-                      <p className="flex items-center">
-                        {currentItem.avgRating || 0}
-                        <span className="ps-1"><Star className="text-[#DBA55C] w-3.5" fill="#DBA55C" /></span>
-                      </p>
-                      <p className="text-[8px]">{currentItem.reviewCount || 0}+</p>
-                    </div>
+                    <span className="flex gap-2 items-center"><Tag className="w-4 text-[#DBA55C]" />{currentAdvertisement.category}</span>
+                    <span className="flex gap-2 items-center"><MapPinned className="w-4 text-[#DBA55C]" />{currentAdvertisement.place}</span>
+                    <a href={`tel:${currentAdvertisement.phone}`} className="flex gap-2 items-center hover:text-[#DBA55C]"><Phone className="w-3 text-[#DBA55C]" />{currentAdvertisement.phone}</a>
                   </div>
-                  <div className="flex items-center justify-center sm:justify-start gap-6 text-amber-10 pt-2">
-                    <p onClick={handlePrev} className="cursor-pointer"><ArrowLeftCircle fill="#DBA55C" className="text-black w-6 h-6" /></p>
-                    <p onClick={handleNext} className="cursor-pointer"><ArrowRightCircle fill="#DBA55C" className="text-black w-6 h-6" /></p>
-                  </div>
+                  {advertisements.length > 1 && <p className="text-[10px] text-white/40">Ad {advertisementIndex + 1} of {advertisements.length}</p>}
                 </div>
               </div>
             ) : (
               <div className="w-full md:w-[70%] h-32 text-amber-100/70 flex items-center justify-center text-xs sm:text-sm">
-                {loading ? "Loading featured businesses..." : "No premium businesses available."}
+                {loading ? "Loading advertisements..." : "No active advertisements yet. Advertise your business to be featured here."}
               </div>
             )}
 
@@ -370,24 +329,23 @@ const Home = ({ searchTerm, setSearchTerm }) => {
               <p className="text-[#DBA55C] text-xl sm:text-2xl font-serif">Advertise With Us ✦</p>
               <p className="text-amber-100/70 text-xs">Get your ad in this banner instantly! Fill form & go live.</p>
               <div className="mt-2">
-                <ListYourBusinessButton />
+                <ListYourBusinessButton buttonLabel="Advertise Your Business" isAdvertisement />
               </div>
             </div>
           </div>
         </section>
 
-        {/* Popular Categories Icons Section */}
 
         <PopularCategories category={category} />
 
-        {/* Business Listings Section with Filters */}
+
         <section ref={businessSectionRef} className="w-[92%] sm:w-[88%]">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8">
             <p className="text-[#1C1813] text-2xl sm:text-3xl font-serif font-bold">
               {selectedCategory === "All" ? "Business Listings" : `${selectedCategory} Businesses`}
             </p>
 
-            {/* Filters Bar */}
+
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-auto">
               <select
                 value={selectedCategory}
@@ -478,7 +436,7 @@ const Home = ({ searchTerm, setSearchTerm }) => {
           )}
         </section>
 
-        {/* Footer Call-to-action */}
+
         <section className="w-[92%] sm:w-[88%] mx-auto mb-10">
           <div className="bg-[#1C1813] rounded-4xl sm:rounded-[2.5rem] py-10 sm:py-14 px-6 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden">
             <h2 className="text-[#E6C594] text-2xl sm:text-4xl font-serif font-bold flex items-center gap-2">

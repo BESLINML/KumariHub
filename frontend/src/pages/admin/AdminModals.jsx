@@ -90,7 +90,7 @@ const AdminModals = ({ modalType, isModalOpen, setIsModalOpen }) => {
     <div className="fixed inset-0 w-full h-full bg-black/50 backdrop-blur-xs z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-4">
       <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col relative p-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none]">
 
-        {/* Close Button */}
+
         <button
           onClick={() => setIsModalOpen(false)}
           className="absolute top-5 right-5 bg-gray-100 hover:bg-gray-200 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm cursor-pointer transition-colors"
@@ -98,7 +98,7 @@ const AdminModals = ({ modalType, isModalOpen, setIsModalOpen }) => {
           ✕
         </button>
 
-        {/* 1. ADD BUSINESS MODAL */}
+
         {modalType === 'business' && (
           <div>
             <h2 className="text-xl font-serif font-bold text-[#1A2E26] mb-1">Add New Business</h2>
@@ -115,7 +115,7 @@ const AdminModals = ({ modalType, isModalOpen, setIsModalOpen }) => {
                   <input type="text" required value={businessData.businessName} onChange={(e) => setBusinessData({ ...businessData, businessName: e.target.value })} placeholder="Elite Store" className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#D4AF37]" />
                 </div>
 
-                {/* Category Selection */}
+
                 <div>
                   <label className="text-xs font-semibold text-gray-600">Category *</label>
                   <select required value={businessData.category} onChange={(e) => setBusinessData({ ...businessData, category: e.target.value })} className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-2 text-xs outline-none bg-white focus:border-[#D4AF37]">
@@ -132,7 +132,6 @@ const AdminModals = ({ modalType, isModalOpen, setIsModalOpen }) => {
                   </div>
                 )}
 
-                {/* Location Selection */}
                 <div>
                   <label className="text-xs font-semibold text-gray-600">Location *</label>
                   <select required value={businessData.location} onChange={(e) => setBusinessData({ ...businessData, location: e.target.value })} className="w-full mt-1 border border-gray-300 rounded-xl px-3 py-2 text-xs outline-none bg-white focus:border-[#D4AF37]">
@@ -175,7 +174,7 @@ const AdminModals = ({ modalType, isModalOpen, setIsModalOpen }) => {
           </div>
         )}
 
-        {/* 2. ADD CATEGORY MODAL */}
+
         {modalType === 'category' && (
           <div>
             <h2 className="text-xl font-serif font-bold text-[#1A2E26] mb-1">Add New Category</h2>
@@ -197,7 +196,7 @@ const AdminModals = ({ modalType, isModalOpen, setIsModalOpen }) => {
           </div>
         )}
 
-        {/* 3. ADD LOCATION MODAL */}
+
         {modalType === 'location' && (
           <div>
             <h2 className="text-xl font-serif font-bold text-[#1A2E26] mb-1">Add New Location</h2>

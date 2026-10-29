@@ -1,71 +1,38 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const cron = require('node-cron');
-const Business = require('./models/Business');
-
-
 dotenv.config();
 
+const { pool, initializeDatabase } = require('./db');
 const app = express();
-
-// Middlewares
-app.use(express.json({ limit: '10mb' })); 
+app.use(express.json({ limit: '10mb' }));
 app.use(cors());
 
+app.use('/api/businesses', require('./routes/businessRoutes'));
+app.use('/api/advertisements', require('./routes/advertisementRoutes'));
+app.use('/api/locations', require('./routes/locationRoutes'));
+app.use('/api/categories', require('./routes/categoryRoutes'));
+app.use('/api/reviews', require('./routes/reviewRoutes'));
+app.use('/api/admin', require('./routes/dashboardRoutes'));
+app.post('/api/create-order', require('./utils/paymentController').createOrder);
+app.get('/', (_req, res) => res.send('KumariHub Backend Server is running smoothly!'));
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB Connected Successfully!'))
-  .catch((err) => console.log('MongoDB Connection Error: ', err));
-
-  cron.schedule('0 0 * * *', async () => {
+cron.schedule('0 0 * * *', async () => {
   try {
-    const today = new Date();
-
-    const result = await Business.updateMany(
-      { 
-        expiryDate: { $lt: today }, 
-        status: { $ne: "expired" }
-      },
-      { 
-        $set: { status: "expired" } 
-      }
+    const { rowCount } = await pool.query(
+      "UPDATE businesses SET status = 'expired' WHERE \"expiryDate\" < NOW() AND status <> 'expired'"
     );
-
-    console.log(`Cron Job: Updated ${result.modifiedCount} businesses to 'expired' status.`);
+    console.log(`Cron Job: Updated ${rowCount} businesses to 'expired' status.`);
   } catch (error) {
-    console.error("Error in automatic expiry status update cron job:", error);
+    console.error('Error in automatic expiry status update cron job:', error);
   }
 });
 
-// Routes Import
-const businessRoutes = require('./routes/businessRoutes');
-app.use('/api/businesses', businessRoutes);
-
-const locationRoutes = require('./routes/locationRoutes');
-app.use('/api/locations', locationRoutes);
-
-const categoryRoutes = require('./routes/categoryRoutes');
-app.use('/api/categories', categoryRoutes);
-
-const reviewRoutes = require('./routes/reviewRoutes'); 
-app.use('/api/reviews', reviewRoutes);
-
-// Test Route
-app.get('/', (req, res) => {
-  res.send('KumariHub Backend Server is running smoothly!');
-});
-
-const dashboardRoutes = require('./routes/dashboardRoutes');
-app.use('/api/admin', dashboardRoutes);
-
-const { createOrder } = require('./utils/paymentController');
-app.post('/api/create-order', createOrder);
-
-
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+initializeDatabase()
+  .then(() => app.listen(PORT, () => console.log(`PostgreSQL connected; server running on port ${PORT}`)))
+  .catch((error) => {
+    console.error('PostgreSQL initialization failed:', error);
+    process.exit(1);
+  });

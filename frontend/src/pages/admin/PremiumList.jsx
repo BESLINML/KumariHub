@@ -1,74 +1,78 @@
-import React, { useState, useEffect } from 'react';
-import BusinessProfileCard from '../../components/BusinessProfileCard';
-import { useAdmin } from '../../context/AdminContext';
+import React, { useEffect, useState } from 'react';
+import { adminFetch } from '../../utils/adminFetch';
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+const formatDate = (value) => value ? new Date(value).toLocaleDateString() : 'â€”';
 
 const PremiumList = () => {
-
-  const API_URL = import.meta.env.VITE_API_URL;
-  const { businesses } = useAdmin()
-
-  const [premiumList, setPremiumList] = useState([]);
-  const [nonPremiumList, setNonPremiumList] = useState([]);
-  const [subTab, setSubTab] = useState('premium');
+  const [advertisements, setAdvertisements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    setLoading(true);
-    const prem = businesses.filter(b => b.premium === true);
-    const nonPrem = businesses.filter(b => b.premium === false)
-    setPremiumList(prem || []);
-    setNonPremiumList(nonPrem || []);
-    setLoading(false);
+    let isMounted = true;
+
+    adminFetch(`${API_URL}/api/advertisements?all=true`)
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Could not load advertisements.');
+        return data;
+      })
+      .then((data) => {
+        if (isMounted) setAdvertisements(Array.isArray(data) ? data : []);
+      })
+      .catch((loadError) => {
+        if (isMounted) setError(loadError.message || 'Could not load advertisements.');
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => { isMounted = false; };
   }, []);
-
-  const currentList = subTab === 'premium' ? premiumList : nonPremiumList;
-
-  if (loading) return <div className="bg-white p-6 rounded-2xl shadow-sm text-center text-xs text-gray-400">Loading listings...</div>;
 
   return (
     <div className="p-4 sm:p-6 h-screen overflow-y-scroll">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h2 className="text-sm sm:text-base md:text-lg font-bold text-gray-800 uppercase tracking-wider">
-          {subTab === 'premium' ? 'Premium Listings' : 'Non-Premium Listings'}
-        </h2>
-
-        {/* Toggle Buttons */}
-        <div className="flex bg-gray-100 p-1 rounded-xl w-full sm:w-auto">
-          <button
-            onClick={() => setSubTab('premium')}
-            className={`flex-1 sm:flex-initial text-xs font-bold px-3 sm:px-4 py-2 rounded-lg transition-all cursor-pointer ${subTab === 'premium' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'
-              }`}
-          >
-            Premium ({premiumList.length})
-          </button>
-          <button
-            onClick={() => setSubTab('nonPremium')}
-            className={`flex-1 sm:flex-initial text-xs font-bold px-3 sm:px-4 py-2 rounded-lg transition-all cursor-pointer ${subTab === 'nonPremium' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'
-              }`}
-          >
-            Non-Premium ({nonPremiumList.length})
-          </button>
-        </div>
+        <h2 className="text-sm sm:text-base md:text-lg font-bold text-gray-800 uppercase tracking-wider">Advertisement List</h2>
       </div>
 
-      <div className="space-y-3  overflow-y-auto pr-1">
-        {currentList.length > 0 ? (
-          currentList.map((item) => (
-            <BusinessProfileCard
-              key={item._id}
-              category={item.category}
-              location={item.location}
-              createdAt={item.createdAt}
-              renewalat={item.expiryDate}
-              buttonOnClick={() => window.open(`/admin-dashBoard/business/${item._id}`, '_blank')}
-              businessIMG={item.img}
-              businessName={item.businessName}
-              businessStatus={item.status}
-            />
-          ))
+      <div className="space-y-3 overflow-y-auto pr-1">
+        {loading ? (
+          <div className="bg-white p-6 rounded-2xl shadow-sm text-center text-xs text-gray-400">Loading advertisements...</div>
+        ) : error ? (
+          <div role="alert" className="text-center py-12 bg-red-50 rounded-2xl border border-red-100">
+            <p className="text-xs text-red-600 font-medium">{error}</p>
+          </div>
+        ) : advertisements.length > 0 ? (
+          advertisements.map((item) => {
+            const isActive = item.expiresAt && new Date(item.expiresAt) > new Date();
+            return (
+              <article key={item._id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-[#EAEFEA]/50 rounded-2xl border border-gray-300">
+                {item.coverPhoto && (
+                  <img src={item.coverPhoto} alt={item.companyName || 'Advertisement'} className="w-16 h-16 rounded-xl object-cover shrink-0" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-bold text-[#1A2E26] truncate">{item.companyName}</h3>
+                  <p className="text-xs text-gray-600">{item.category} Â· {item.place}</p>
+                  <p className="text-xs text-gray-600">{item.phone}</p>
+                  {item.description && <p className="mt-1 text-xs text-gray-500 line-clamp-2">{item.description}</p>}
+                </div>
+                <div className="flex flex-wrap sm:flex-col gap-2 sm:items-end shrink-0">
+                  <span className={`text-[10px] font-semibold px-2 py-1 rounded-md ${isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'}`}>
+                    {isActive ? 'Active' : 'Expired'}
+                  </span>
+                  <span className="text-[10px] font-semibold text-gray-600">Paid: {formatDate(item.createdAt)}</span>
+                  <span className="text-[10px] font-semibold text-gray-600">Expires: {formatDate(item.expiresAt)}</span>
+                  <span className="text-[10px] text-gray-500">{item.durationDays} days Â· â‚¹{item.amount}</span>
+                </div>
+              </article>
+            );
+          })
         ) : (
           <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-            <p className="text-xs text-gray-400 font-medium">No listings found.</p>
+            <p className="text-xs text-gray-400 font-medium">No advertisements found.</p>
           </div>
         )}
       </div>

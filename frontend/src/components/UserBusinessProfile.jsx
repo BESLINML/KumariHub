@@ -110,10 +110,10 @@ export default function UserBusinessProfile() {
       <BusinessSEO business={business}/>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* LEFT & CENTER: Main Business Section */}
+
         <div className="lg:col-span-2 space-y-6">
 
-          {/* Top Banner / Hero Card */}
+
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="relative h-72 sm:h-80 w-full bg-white">
               <img
@@ -122,7 +122,6 @@ export default function UserBusinessProfile() {
                 className="w-full h-full object-cover"
               />
 
-              {/* Top-Left Badges */}
               <div className="absolute top-4 left-4 flex flex-wrap gap-2">
                 {business.premium && (
                   <span className="bg-linear-to-r from-amber-500 to-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-md flex items-center gap-1 shadow-md">
@@ -137,7 +136,7 @@ export default function UserBusinessProfile() {
                 </span>
               </div>
 
-              {/* Share Button Top Right */}
+
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(window.location.href);
@@ -149,7 +148,7 @@ export default function UserBusinessProfile() {
               </button>
             </div>
 
-            {/* Profile Info Section */}
+
             <div className="px-6 pb-6 pt-16 relative">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 -mt-16 sm:-mt-20 mb-4">
                 <div className="flex items-end gap-4">
@@ -168,7 +167,7 @@ export default function UserBusinessProfile() {
                   </div>
                 </div>
 
-                {/* Rating Badge */}
+
                 <div className="flex items-center gap-2.5 bg-[#1C1813] text-white px-4 py-2.5 rounded-xl shadow-md self-start sm:self-auto">
                   <span className="text-2xl font-black text-[#DBA55C]">{avgRating}</span>
                   <div className="border-l border-white/20 pl-2.5 text-xs">
@@ -184,7 +183,7 @@ export default function UserBusinessProfile() {
                 </div>
               </div>
 
-              {/* Quick Actions Bar */}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-gray-100">
                 <a
                   href={`tel:${business.phone}`}
@@ -204,7 +203,7 @@ export default function UserBusinessProfile() {
             </div>
           </div>
 
-          {/* About Section */}
+
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-3 pb-2 border-b border-gray-100">
               About {business.businessName}
@@ -214,7 +213,7 @@ export default function UserBusinessProfile() {
             </p>
           </div>
 
-          {/* Services Offered Section */}
+
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">Services Offered</h3>
             <div className="flex flex-wrap gap-2.5">
@@ -226,7 +225,7 @@ export default function UserBusinessProfile() {
             </div>
           </div>
 
-          {/* Timings & Location Map Link Section */}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-base font-bold text-gray-900 mb-3 pb-2 border-b border-gray-100 flex items-center gap-2">
@@ -280,7 +279,7 @@ export default function UserBusinessProfile() {
             </div>
           </div>
 
-          {/* Reviews & Ratings Section */}
+
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-6">
             <div className="flex justify-between items-center pb-2 border-b border-gray-100">
               <h3 className="text-lg font-bold text-gray-900">Customer Reviews & Ratings</h3>
@@ -356,7 +355,7 @@ export default function UserBusinessProfile() {
           </div>
         </div>
 
-        {/* RIGHT SIDE: Similar Businesses, Why Choose, Owner CTA, Social Share */}
+
         <div className="space-y-6">
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
@@ -452,13 +451,13 @@ export default function UserBusinessProfile() {
             </Link>
           </div>
 
-          {/* Social Share Box */}
+
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 text-center">
             <h3 className="font-bold text-gray-900 text-sm mb-1">Share This Business</h3>
             <p className="text-xs text-gray-500 mb-4">Help others discover great businesses</p>
 
             <div className="flex justify-center gap-3">
-              {/* Facebook Icon */}
+
               <button
                 onClick={() => window.open(`https://facebook.com/sharer/sharer.php?u=${window.location.href}`)}
                 className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 transition cursor-pointer shadow-sm"
@@ -469,7 +468,7 @@ export default function UserBusinessProfile() {
                 </svg>
               </button>
 
-              {/* WhatsApp Icon */}
+
               <button
                 onClick={() => window.open(`https://api.whatsapp.com/send?text=${window.location.href}`)}
                 className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-700 transition cursor-pointer shadow-sm"
@@ -478,7 +477,7 @@ export default function UserBusinessProfile() {
                 <MessageCircle className="w-4 h-4" />
               </button>
 
-              {/* Twitter / X Icon */}
+
               <button
                 onClick={() => window.open(`https://twitter.com/intent/tweet?url=${window.location.href}`)}
                 className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center hover:bg-black transition cursor-pointer shadow-sm"
@@ -489,7 +488,7 @@ export default function UserBusinessProfile() {
                 </svg>
               </button>
 
-              {/* LinkedIn Icon */}
+
               <button
                 onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${window.location.href}`)}
                 className="w-10 h-10 rounded-full bg-blue-700 text-white flex items-center justify-center hover:bg-blue-800 transition cursor-pointer shadow-sm"
@@ -500,7 +499,7 @@ export default function UserBusinessProfile() {
                 </svg>
               </button>
 
-              {/* Copy Link Button */}
+
               <button
                 onClick={() => { navigator.clipboard.writeText(window.location.href); alert("Copied!"); }}
                 className="w-10 h-10 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center hover:bg-gray-300 transition cursor-pointer shadow-sm"

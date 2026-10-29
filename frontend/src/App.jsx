@@ -38,7 +38,7 @@ const App = () => {
             <Route path="/admin-dashBoard/inactive-list" element={<InactiveList />} />
             <Route path="/admin-dashBoard/pending-submission" element={<PendingSubmissions />} />
             <Route path="/admin-dashBoard/recent-businesses" element={<RecentBusinesses />} />
-            <Route path="/admin-dashBoard/premium-list" element={<PremiumList />} />
+            <Route path="/admin-dashBoard/advertisement-list" element={<PremiumList />} />
             <Route path="/admin-dashBoard/renewal-list" element={<Renewal />} />
             <Route path="/admin-dashBoard/other" element={<Other />} />
 

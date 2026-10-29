@@ -65,7 +65,19 @@ const BusinessCard = ({
 
     return (
         <section className="">
-            <div className="bg-white rounded-4xl shadow-sm border border-gray-100 overflow-hidden hover:-translate-y-2 hover:border-[#DBA55C] hover:shadow-2xl duration-500 transition-all">
+            <div
+                className={`bg-white rounded-4xl shadow-sm border border-gray-100 overflow-hidden hover:-translate-y-2 hover:border-[#DBA55C] hover:shadow-2xl duration-500 transition-all ${onclick ? 'cursor-pointer' : ''}`}
+                onClick={onclick}
+                onKeyDown={onclick ? (event) => {
+                    if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+                        event.preventDefault();
+                        onclick();
+                    }
+                } : undefined}
+                role={onclick ? 'link' : undefined}
+                tabIndex={onclick ? 0 : undefined}
+                aria-label={onclick ? `View details for ${bussinessName}` : undefined}
+            >
 
                 {/* Image & Tags Section */}
                 <div className="relative h-40 overflow-hidden">
@@ -84,13 +96,16 @@ const BusinessCard = ({
                     </p>
                 </div>
 
-                {/* Content Section */}
+
                 <div className="p-4 sm:p-5 space-y-3">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
                             <Store className="w-5 h-5 text-[#DBA55C] shrink-0" />
                             <button
-                                onClick={onclick}
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    onclick?.();
+                                }}
                                 className="text-lg font-[650] text-gray-800 hover:text-[#DBA55C] cursor-pointer text-left truncate "
                             >
                                 {bussinessName}
@@ -115,7 +130,7 @@ const BusinessCard = ({
                         </div>
                     </div>
 
-                    {/* Ratings Section */}
+
                     <div className="flex items-center gap-2">
                         <div className="flex items-center gap-0.5">
                             {[1, 2, 3, 4, 5].map((star) => (
@@ -135,6 +150,7 @@ const BusinessCard = ({
 
                         <a
                             href={`tel:${phone}`}
+                            onClick={(event) => event.stopPropagation()}
                             className="flex items-center justify-center gap-1 text-[11px] sm:text-xs font-medium border border-green-300 text-green-700 bg-green-50 hover:bg-green-100 rounded-full transition py-1.5 px-1 truncate shadow-2xs"
                         >
                             <Phone className="w-3 h-3 shrink-0" fill="#166534" /> Call
@@ -143,6 +159,7 @@ const BusinessCard = ({
                         {whatsappNumber ? (
                             <a
                                 href={`https://wa.me/${whatsappNumber}`}
+                                onClick={(event) => event.stopPropagation()}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center justify-center gap-1 text-[11px] sm:text-xs font-medium border border-sky-300 text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-full transition py-1.5 px-1 truncate shadow-2xs"
@@ -158,6 +175,7 @@ const BusinessCard = ({
                         {locationLink ? (
                             <a
                                 href={locationLink}
+                                onClick={(event) => event.stopPropagation()}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center justify-center gap-1 text-[11px] sm:text-xs font-medium border border-yellow-300 text-yellow-700 bg-yellow-50 hover:bg-yellow-100 rounded-full transition py-1.5 px-1 truncate shadow-2xs"

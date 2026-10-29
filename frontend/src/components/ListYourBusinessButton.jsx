@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { handlePayment } from '../utils/payment';
+import NotificationBar from './NotificationBar';
 
-const ListYourBusinessButton = ({navbar}) => {
+const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', isAdvertisement = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [categoriesList, setCategoriesList] = useState([]);
   const [locationsList, setLocationsList] = useState([]);
   const [issubmiting, setIsSubmiting] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState({ days: 15, amount: 299 });
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -41,6 +43,15 @@ const ListYourBusinessButton = ({navbar}) => {
     };
   }, [isOpen]);
 
+  const [notifyConfig, setNotifyConfig] = useState(
+
+    {
+      isPopUpOpen : false,
+      title:"",
+      dis:"",
+      type:"success"
+    }
+  );
 
   const [formData, setFormData] = useState({
     ownerName: '',
@@ -94,134 +105,111 @@ const ListYourBusinessButton = ({navbar}) => {
     }
   };
 
+  const handleSubmit = async (e) => {
+    setIsSubmiting(true)
+    e.preventDefault();
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   const finalCategory = formData.category === "Other" ? formData.customCategory : formData.category;
-  //   const finalLocation = formData.location === "Other" ? formData.customLocation : formData.location;
+    const finalCategory = formData.category === "Other" ? formData.customCategory : formData.category;
+    const finalLocation = formData.location === "Other" ? formData.customLocation : formData.location;
 
-  //   const formattedServices = formData.services
-  //     ? formData.services.split(',').map(s => s.trim()).filter(Boolean)
-  //     : [];
+    const formattedServices = formData.services
+      ? formData.services.split(',').map(s => s.trim()).filter(Boolean)
+      : [];
 
-  //   const newSubmission = {
-  //     ownerName: formData.ownerName,
-  //     businessName: formData.businessName,
-  //     category: finalCategory,
-  //     location: finalLocation,
-  //     address: formData.address,
-  //     aboutBusness: formData.aboutBusness,
-  //     phone: Number(formData.phone),
-  //     whatsapp: Number(formData.whatsapp) || Number(formData.phone),
-  //     locationLink: formData.locationLink || "",
-  //     services: formattedServices,
-  //     img: formData.img || "",
-  //     timing: formData.timing,
-  //     status: "pending",
-  //     premium: false,
-  //     reviewCount: 0,
-  //     avgRating: 0,
-  //     busnessReview: []
-  //   };
+    const businessBasicData = {
+      ownerName: formData.ownerName || formData.businessName,
+      businessName: formData.businessName,
+      category: finalCategory,
+      location: finalLocation,
+      address: formData.address || finalLocation,
+      aboutBusness: formData.aboutBusness,
+      phone: Number(formData.phone),
+      whatsapp: Number(formData.whatsapp) || Number(formData.phone),
+      locationLink: formData.locationLink || "",
+      services: formattedServices,
+      img: formData.img || "",
+      timing: formData.timing,
+      status: "pending",
+      premium: false,
+      reviewCount: 0,
+      avgRating: 0,
+      busnessReview: [],
+      ...(isAdvertisement && {
+        expiryDate: new Date(Date.now() + selectedPlan.days * 24 * 60 * 60 * 1000).toISOString(),
+        advertisementPlan: `${selectedPlan.days} days`,
+        advertisementAmount: selectedPlan.amount
+      })
+    };
 
-  //   try {
-  //     const response = await fetch(`${API_URL}/api/businesses/add`, {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify(newSubmission),
-  //     });
+    // 1. Trigger Razorpay Payment First (₹199)
+    handlePayment(API_URL, { businessName: formData.businessName, phone: formData.phone }, async (paymentResponse) => {
+      try {
+        const submission = isAdvertisement
+          ? {
+              companyName: formData.businessName,
+              place: finalLocation,
+              phone: formData.phone,
+              category: finalCategory,
+              coverPhoto: formData.img,
+              description: formData.aboutBusness,
+              durationDays: selectedPlan.days,
+              amount: selectedPlan.amount,
+              razorpay_payment_id: paymentResponse.razorpay_payment_id,
+              razorpay_order_id: paymentResponse.razorpay_order_id,
+              razorpay_signature: paymentResponse.razorpay_signature
+            }
+          : {
+              ...businessBasicData,
+              razorpay_payment_id: paymentResponse.razorpay_payment_id,
+              razorpay_order_id: paymentResponse.razorpay_order_id,
+              razorpay_signature: paymentResponse.razorpay_signature
+            };
 
-  //     const data = await response.json();
+        const response = await fetch(`${API_URL}/api/${isAdvertisement ? 'advertisements' : 'businesses/add'}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(submission),
+        });
 
-  //     if (response.ok) {
-  //       alert("Business submitted successfully! It is sent to the Admin for approval.");
-  //       setIsOpen(false);
-  //       setFormData({
-  //         ownerName: '', businessName: '', category: '', customCategory: '', location: '', customLocation: '',
-  //         address: '', aboutBusness: '', phone: '', whatsapp: '', locationLink: '', services: '', img: '',
-  //         timing: formData.timing
-  //       });
-  //     } else {
-  //       alert("Error: " + (data.error || "Failed to submit business"));
-  //     }
-  //   } catch (error) {
-  //     console.error("Network Error:", error);
-  //     alert("Failed to connect to backend server!");
-  //   }
-  // };
+        const data = await response.json();
 
-
-const handleSubmit = async (e) => {
-  setIsSubmiting(true)
-  e.preventDefault();
-  
-  const finalCategory = formData.category === "Other" ? formData.customCategory : formData.category;
-  const finalLocation = formData.location === "Other" ? formData.customLocation : formData.location;
-
-  const formattedServices = formData.services
-    ? formData.services.split(',').map(s => s.trim()).filter(Boolean)
-    : [];
-
-  const businessBasicData = {
-    ownerName: formData.ownerName,
-    businessName: formData.businessName,
-    category: finalCategory,
-    location: finalLocation,
-    address: formData.address,
-    aboutBusness: formData.aboutBusness,
-    phone: Number(formData.phone),
-    whatsapp: Number(formData.whatsapp) || Number(formData.phone),
-    locationLink: formData.locationLink || "",
-    services: formattedServices,
-    img: formData.img || "",
-    timing: formData.timing,
-    status: "pending",
-    premium: false,
-    reviewCount: 0,
-    avgRating: 0,
-    busnessReview: []
+        if (response.ok) {
+          if (isAdvertisement) {
+            window.dispatchEvent(new CustomEvent('kumarihub:advertisement-created', { detail: data }));
+          }
+          setNotifyConfig({isPopUpOpen:true, title:"Payment Successful", dis:isAdvertisement ? "Payment successful! Your advertisement is now live." : "Payment successful & Business submitted for Admin approval!", type:"success"})
+          // alert("Payment successful & Business submitted for Admin approval!");
+          // setIsOpen(false);
+          setFormData({
+            ownerName: '', businessName: '', category: '', customCategory: '', location: '', customLocation: '',
+            address: '', aboutBusness: '', phone: '', whatsapp: '', locationLink: '', services: '', img: '',
+            timing: formData.timing
+          });
+        } else {
+          setNotifyConfig({isPopUpOpen:true, title:"Submission Error", dis:"Payment successful, but error saving business: " + (data.error || "Failed to submit"),type:"error"})
+          // alert("Payment successful, but error saving business: " + (data.error || "Failed to submit"));
+        }
+      } catch (error) {
+        console.error("Network Error:", error);
+        setNotifyConfig({isPopUpOpen:true, title:"Connection Failed", dis:"Failed to connect to backend server after payment!", type:"error"})
+        // alert("Failed to connect to backend server after payment!");
+      }
+      setIsSubmiting(false);
+    }, isAdvertisement ? selectedPlan : null);
   };
 
-  // 1. Trigger Razorpay Payment First (₹199)
-  handlePayment(API_URL, { businessName: formData.businessName, phone: formData.phone }, async (paymentResponse) => {
-    try {
-      // 2. Add paymentId to the submission object after payment succeeds
-      const newSubmission = {
-        ...businessBasicData,
-        paymentId: paymentResponse.razorpay_payment_id
-      };
+  const handleFormCancel = () => {
+    setIsOpen(false);
+    setIsSubmiting(false)
+    // setFormData({
+    //   ownerName: '', businessName: '', category: '', customCategory: '', location: '', customLocation: '',
+    //   address: '', aboutBusness: '', phone: '', whatsapp: '', locationLink: '', services: '', img: '',
+    //   timing: formData.timing
+    // });
+  };
 
-      // 3. Send data to backend MongoDB
-      const response = await fetch(`${API_URL}/api/businesses/add`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newSubmission),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        alert("Payment successful & Business submitted for Admin approval!");
-        setIsOpen(false);
-        setFormData({
-          ownerName: '', businessName: '', category: '', customCategory: '', location: '', customLocation: '',
-          address: '', aboutBusness: '', phone: '', whatsapp: '', locationLink: '', services: '', img: '',
-          timing: formData.timing
-        });
-      } else {
-        alert("Payment successful, but error saving business: " + (data.error || "Failed to submit"));
-      }
-    } catch (error) {
-      console.error("Network Error:", error);
-      alert("Failed to connect to backend server after payment!");
-    }
-    setIsSubmiting(false);
-  });
-};
   const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
   return (
@@ -229,10 +217,10 @@ const handleSubmit = async (e) => {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="bg-linear-to-r from-[#E6C594] to-[#DBA55C] text-[#1C1813] font-bold lg:px-10 px-4 py-2 text-[10px] md:text-sm lg:text-base rounded-full hover:scale-95 hover:shadow-lg hover:shadow-amber-300/25 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer lg:w-70"
+        className={`bg-linear-to-r from-[#E6C594] to-[#DBA55C] text-[#1C1813] font-bold rounded-full hover:scale-95 hover:shadow-lg hover:shadow-amber-300/25 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${navbar ? 'w-full whitespace-nowrap px-1.5 py-2 text-[10px]' : 'lg:px-10 px-4 py-2 text-[10px] md:text-sm lg:text-base lg:w-70'}`}
       >
         <span className="bg-[#1C1813] text-[#DBA55C] rounded-full w-3 h-3 text-center md:w-5 md:h-5 flex items-center justify-center text-xs font-bold">+</span>
-        List Your Business
+        {buttonLabel}
       </button>
 
       {isOpen && (
@@ -241,12 +229,12 @@ const handleSubmit = async (e) => {
 
             <div className="sticky top-0 bg-[#FCF7EF] border-b border-gray-200 px-6 lg:px-12 py-4 flex items-center justify-between z-10">
               <div>
-                <h2 className="text-xl lg:text-2xl font-bold font-serif text-[#1A2E26]">List Your Business</h2>
-                <p className="text-xs text-gray-500">Fill in your business details below for admin approval.</p>
+                <h2 className="text-xl lg:text-2xl font-bold font-serif text-[#1A2E26]">{isAdvertisement ? 'Advertise Your Business' : 'List Your Business'}</h2>
+                <p className="text-xs text-gray-500">{isAdvertisement ? 'Share your business details to promote it on KumariHub.' : 'Fill in your business details below for admin approval.'}</p>
               </div>
               <button
                 type="button"
-                onClick={() => setIsOpen(false)}
+                onClick={handleFormCancel}
                 className="bg-gray-100 hover:bg-gray-200 text-gray-700 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg cursor-pointer transition-colors"
               >
                 ✕
@@ -254,7 +242,59 @@ const handleSubmit = async (e) => {
             </div>
 
             <div className="flex-1 max-w-5xl w-full mx-auto p-6 lg:p-10">
-              <form onSubmit={handleSubmit} className="space-y-6 text-left">
+              <form onSubmit={handleSubmit} className="space-y-6 text-left text-gray-900">
+                {isAdvertisement ? (
+                  <>
+                  <fieldset>
+                    <legend className="text-sm font-bold text-gray-700 mb-3">Choose an advertisement plan *</legend>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[{ days: 15, amount: 299 }, { days: 30, amount: 499 }].map((plan) => (
+                        <label key={plan.days} className={`flex items-center gap-3 rounded-2xl border-2 p-4 cursor-pointer transition-colors ${selectedPlan.days === plan.days ? 'border-[#DBA55C] bg-amber-50' : 'border-gray-200 hover:border-amber-300'}`}>
+                          <input type="radio" name="advertisementPlan" value={plan.days} checked={selectedPlan.days === plan.days} onChange={() => setSelectedPlan(plan)} className="accent-[#DBA55C]" />
+                          <span className="flex flex-col">
+                            <span className="font-bold text-[#1A2E26]">{plan.days} days</span>
+                            <span className="text-sm text-gray-600">₹{plan.amount}</span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600">Company Name *</label>
+                      <input type="text" name="businessName" required value={formData.businessName} onChange={handleChange} placeholder="Enter company name" className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600">Place *</label>
+                      <input type="text" name="location" required value={formData.location} onChange={handleChange} placeholder="Enter town or area" className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600">Phone Number *</label>
+                      <input type="tel" name="phone" required value={formData.phone} onChange={handleChange} placeholder="Enter phone number" className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600">Category *</label>
+                      <select name="category" required value={formData.category} onChange={handleChange} className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none bg-white focus:border-[#DBA55C]">
+                        <option value="">Select a category</option>
+                        {categoriesList.map((cat, idx) => <option key={idx} value={cat}>{cat}</option>)}
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    {formData.category === 'Other' && <div>
+                      <label className="text-xs font-semibold text-gray-600">Specify Category *</label>
+                      <input type="text" name="customCategory" required value={formData.customCategory} onChange={handleChange} placeholder="Enter category" className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
+                    </div>}
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-semibold text-gray-600">Cover Photo *</label>
+                      <input type="file" accept="image/*" required onChange={handleImageChange} className="w-full mt-1.5 border border-gray-300 rounded-xl px-3 py-2 text-xs bg-white cursor-pointer" />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-semibold text-gray-600">Description *</label>
+                      <textarea name="aboutBusness" rows="4" required value={formData.aboutBusness} onChange={handleChange} placeholder="Describe your company or advertisement" className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
+                    </div>
+                  </div>
+                  </>
+                ) : <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                   {/* Owner Name */}
@@ -263,13 +303,13 @@ const handleSubmit = async (e) => {
                     <input type="text" name="ownerName" required value={formData.ownerName} onChange={handleChange} placeholder="e.g. John Doe" className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
                   </div>
 
-                  {/* Business Name */}
+
                   <div>
                     <label className="text-xs font-semibold text-gray-600">Business Name *</label>
                     <input type="text" name="businessName" required value={formData.businessName} onChange={handleChange} placeholder="e.g. Elite Showroom" className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
                   </div>
 
-                  {/* Category */}
+
                   <div>
                     <label className="text-xs font-semibold text-gray-600">Category *</label>
                     <select name="category" required value={formData.category} onChange={handleChange} className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none bg-white focus:border-[#DBA55C]">
@@ -286,7 +326,7 @@ const handleSubmit = async (e) => {
                     </div>
                   )}
 
-                  {/* Location */}
+
                   <div>
                     <label className="text-xs font-semibold text-gray-600">Location *</label>
                     <select name="location" required value={formData.location} onChange={handleChange} className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none bg-white focus:border-[#DBA55C]">
@@ -303,50 +343,50 @@ const handleSubmit = async (e) => {
                     </div>
                   )}
 
-                  {/* Phone Number */}
+
                   <div>
                     <label className="text-xs font-semibold text-gray-600">Phone Number *</label>
                     <input type="number" name="phone" required value={formData.phone} onChange={handleChange} placeholder="9876543210" className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
                   </div>
 
-                  {/* WhatsApp Number */}
+
                   <div>
                     <label className="text-xs font-semibold text-gray-600">WhatsApp Number</label>
                     <input type="number" name="whatsapp" value={formData.whatsapp} onChange={handleChange} placeholder="9876543210" className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
                   </div>
 
-                  {/* Services */}
+
                   <div className="md:col-span-2">
                     <label className="text-xs font-semibold text-gray-600">Services (Comma Separated)</label>
                     <input type="text" name="services" value={formData.services} onChange={handleChange} placeholder="Electronics, Appliances, Home Delivery" className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
                   </div>
 
-                  {/* Cover Photo */}
+
                   <div className="md:col-span-2">
                     <label className="text-xs font-semibold text-gray-600">Cover Photo *</label>
                     <input type="file" accept="image/*" onChange={handleImageChange} className="w-full mt-1.5 border border-gray-300 rounded-xl px-3 py-2 text-xs bg-white cursor-pointer" />
                   </div>
                 </div>
 
-                {/* Full Address */}
+
                 <div>
                   <label className="text-xs font-semibold text-gray-600">Address *</label>
                   <input type="text" name="address" required value={formData.address} onChange={handleChange} placeholder="Kuzhithurai Bypass, Kuzhithurai" className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
                 </div>
 
-                {/* About Business */}
+
                 <div>
                   <label className="text-xs font-semibold text-gray-600">About *</label>
                   <textarea name="aboutBusness" rows="3" required value={formData.aboutBusness} onChange={handleChange} placeholder="Elite Showroom offers a wide range of..." className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
                 </div>
 
-                {/* Google Map Link */}
+
                 <div>
                   <label className="text-xs font-semibold text-gray-600">Google Map Link</label>
                   <input type="url" name="locationLink" value={formData.locationLink} onChange={handleChange} placeholder="https://maps.app.goo.gl/..." className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
                 </div>
 
-                {/* Timing configuration section */}
+
                 <div className="border-t border-gray-200 pt-4">
                   <label className="text-sm font-bold text-gray-700 block mb-3">Opening & Closing Hours *</label>
                   <div className="space-y-3">
@@ -379,18 +419,39 @@ const handleSubmit = async (e) => {
                     ))}
                   </div>
                 </div>
+                </>}
 
                 <div className="flex justify-end gap-4 pt-6 border-t border-gray-200 pb-10">
-                  <button type="button" onClick={() => setIsOpen(false)} className="md:px-6 md:py-3 rounded-full text-sm font-semibold text-gray-600 hover:bg-gray-100 cursor-pointer">Cancel</button>
-                  <button type="submit" className="bg-linear-to-r from-[#E6C594] to-[#DBA55C] text-[#1C1813] px-3 md:px-8 py-1 md:py-3 rounded-full text-sm font-semibold cursor-pointer shadow-lg hover:opacity-90">{issubmiting?"Submiting":"Submit Listing"}</button>
+                  <button type="button" onClick={handleFormCancel} className="md:px-6 md:py-3 rounded-full text-sm font-semibold text-gray-600 hover:bg-gray-100 cursor-pointer">Cancel</button>
+                  <button type="submit" disabled={issubmiting} className={`text-[#1C1813] px-3 md:px-8 py-1 md:py-3 rounded-full text-sm font-semibold shadow-lg hover:opacity-90 ${issubmiting?"cursor-not-allowed bg-gray-500":"cursor-pointer bg-linear-to-r from-[#E6C594] to-[#DBA55C]"}`}>{issubmiting ? "Submitting" : isAdvertisement ? "Submit Advertisement" : "Submit Listing"}</button>
                 </div>
+
               </form>
             </div>
           </div>
+          <NotificationBar
+        isOpen={notifyConfig.isPopUpOpen}
+        title={notifyConfig.type}
+        message={notifyConfig.dis}
+        type={notifyConfig.type}
+        onClose={() => {
+          setNotifyConfig({ ...notifyConfig, isPopUpOpen: false });
+          // // Success aana page-ai refresh / redirect panna intha place-ai use pannikonga
+          // if (notifyConfig.type === 'success') {
+          //   window.location.reload();
+          // }
+        }}
+      />
+      {/* <NotificationBar
+    isOpen={notifyConfig.isPopUpOpen}
+          message="Payment successful & Business submitted for Admin approval!"
+          title="Payment successful"
+          type="error"
+      /> */}
         </div>
       )}
     </>
   )
 };
 
-export default ListYourBusinessButton; 
+export default ListYourBusinessButton;

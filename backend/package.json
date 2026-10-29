@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
+    "seed:businesses": "node seed-businesses.js",
+    "seed:advertisements": "node seed-advertisements.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -15,10 +17,9 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "mongodb": "^7.5.0",
-    "mongoose": "^9.9.1",
     "node-cron": "^4.6.0",
     "nodemon": "^3.1.14",
+    "pg": "^8.16.3",
     "razorpay": "^2.9.8"
   }
 }

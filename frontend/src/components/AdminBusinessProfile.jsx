@@ -1,10 +1,11 @@
+import { adminFetch } from '../utils/adminFetch';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 const API_URL = import.meta.env.VITE_API_URL;
 
 const AdminBusinessProfile = () => {
   const { id } = useParams();
-  const useNavigateHook = useNavigate();
+  const navigate = useNavigate();
 
   const [business, setBusiness] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,9 +22,9 @@ const AdminBusinessProfile = () => {
     try {
       setLoading(true);
       const [busRes, catRes, locRes] = await Promise.all([
-        fetch(`${API_URL}/api/businesses/${id}`),
-        fetch(`${API_URL}/api/categories`),
-        fetch(`${API_URL}/api/locations`)
+        adminFetch(`${API_URL}/api/businesses/${id}`),
+        adminFetch(`${API_URL}/api/categories`),
+        adminFetch(`${API_URL}/api/locations`)
       ]);
 
       const busData = await busRes.json();
@@ -69,7 +70,7 @@ const AdminBusinessProfile = () => {
     const endpoint = business.status === 'active' ? 'inactive' : 'activate';
 
     try {
-      const res = await fetch(`${API_URL}/api/businesses/${endpoint}/${id}`, {
+      const res = await adminFetch(`${API_URL}/api/businesses/${endpoint}/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -90,12 +91,12 @@ const AdminBusinessProfile = () => {
   const handleDeleteBusiness = async () => {
     if (window.confirm("Are you sure you want to delete this business?")) {
       try {
-        const res = await fetch(`${API_URL}/api/businesses/${id}`, {
+        const res = await adminFetch(`${API_URL}/api/businesses/${id}`, {
           method: 'DELETE',
         });
         if (res.ok) {
           alert("Business deleted successfully!");
-          useNavigateHook(-1);
+          navigate(-1);
         } else {
           alert("Failed to delete business");
         }
@@ -152,7 +153,7 @@ const AdminBusinessProfile = () => {
     e.preventDefault();
     setUpdating(true);
     try {
-      const res = await fetch(`${API_URL}/api/businesses/${id}`, {
+      const res = await adminFetch(`${API_URL}/api/businesses/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -189,7 +190,7 @@ const AdminBusinessProfile = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-white p-4">
         <p className="text-sm font-bold text-gray-500 mb-4 text-center">Business not found.</p>
-        <button onClick={() => useNavigateHook(-1)} className="text-xs bg-[#1A2E26] text-white px-4 py-2 rounded-xl cursor-pointer">
+        <button onClick={() => navigate(-1)} className="text-xs bg-[#1A2E26] text-white px-4 py-2 rounded-xl cursor-pointer">
           Go Back
         </button>
       </div>
@@ -200,7 +201,6 @@ const AdminBusinessProfile = () => {
     <div className="min-h-screen bg-[#EAEFEA]/30 p-3 sm:p-6 relative">
       <div className="max-w-4xl mx-auto space-y-6">
 
-        {/* Main Profile Card */}
         <div className="bg-white p-4 sm:p-8 rounded-3xl shadow-sm border border-gray-200 space-y-6">
           <div className="flex flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-gray-100">
             <div className="flex sm:flex-row items-start sm:items-center gap-4 w-full md:w-auto">
@@ -256,7 +256,7 @@ const AdminBusinessProfile = () => {
             </div>
           </div>
 
-          {/* Timings Display Section */}
+
           <div className="space-y-3 pt-2">
             <h3 className="text-xs font-bold text-[#1A2E26] uppercase tracking-wider">Business Timings</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
@@ -277,7 +277,6 @@ const AdminBusinessProfile = () => {
             </div>
           </div>
 
-          {/* Services Offered */}
           {business.services && business.services.length > 0 && (
             <div className="space-y-2 pt-2">
               <h3 className="text-xs font-bold text-[#1A2E26] uppercase tracking-wider">Services Offered</h3>
@@ -317,7 +316,7 @@ const AdminBusinessProfile = () => {
 
       </div>
 
-      {/* EDIT MODAL POPUP */}
+
       {isEditing && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-2xl w-full p-4 sm:p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-xl scrollbar-none my-auto">
@@ -384,7 +383,7 @@ const AdminBusinessProfile = () => {
                 </div>
               </div>
 
-              {/* Editable Timings Section */}
+
               <div className="space-y-2 pt-2 border-t border-gray-100">
                 <label className="font-semibold text-gray-700 block">Operating Timings By Day</label>
                 <div className="space-y-2 p-2 border border-gray-100 rounded-xl bg-gray-50/50">

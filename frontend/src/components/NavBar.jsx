@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import SearchBox from './SearchBox';
 import ListYourBusinessButton from './ListYourBusinessButton';
 
-const NavBar = ({ onScrollToBusiness }) => {
+const NavBar = ({ onScrollToBusiness, advertisement, onAdvertisementClick }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
 
@@ -44,19 +44,35 @@ const NavBar = ({ onScrollToBusiness }) => {
 
         </div>
 
-        <div className="md:w-full h-10">
+        <div className="h-10 min-w-0 md:flex-[3]">
           <SearchBox navbar={true}/>
         </div>
-        
 
-        {/* Desktop Action Button */}
+        {advertisement && (
+          <button
+            type="button"
+            onClick={() => onAdvertisementClick?.(advertisement)}
+            className="hidden min-w-0 items-center gap-2 rounded-xl border border-amber-200 bg-white/90 p-1.5 text-left shadow-sm transition hover:border-[#DBA55C] hover:shadow-md md:flex md:flex-[2]"
+            aria-label={`View ${advertisement.companyName} business details`}
+          >
+            <img src={advertisement.coverPhoto} alt="" className="h-11 w-14 shrink-0 rounded-lg object-cover" />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-xs font-bold text-[#1A2E26]">{advertisement.companyName}</span>
+              <span className="block truncate text-[10px] text-gray-500">{advertisement.description}</span>
+              <span className="block truncate text-[9px] text-gray-500">{advertisement.phone} · {advertisement.place}</span>
+            </span>
+          </button>
+        )}
+
+
+
         {/* <div className="hidden md:block shrink-0">
           <Button onclick={onScrollToBusiness} />
         </div> */}
-        <div className="hidden md:block shrink-0">
-          <ListYourBusinessButton navbar={true} />
+        <div className="hidden min-w-0 md:block md:flex-1">
+          <ListYourBusinessButton navbar={true} buttonLabel="Add" />
         </div>
-        
+
 
       </div>
     </nav>

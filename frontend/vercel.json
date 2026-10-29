@@ -1,5 +1,9 @@
 {
   "rewrites": [
+    {
+      "source": "/:category/:location/:business",
+      "destination": "/api/share?category=:category&location=:location&name=:business"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

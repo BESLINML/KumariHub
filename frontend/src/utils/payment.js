@@ -1,24 +1,48 @@
-export const handlePayment = async (API_URL, businessData, onSuccess) => {
+export const handlePayment = async (API_URL, businessData, onSuccess, plan = null) => {
   try {
-    // 1. Create Order from Backend
+    const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
+    if (!razorpayKeyId) throw new Error("Razorpay is not configured");
+
     const orderRes = await fetch(`${API_URL}/api/create-order`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(plan ? { durationDays: plan.days } : {})
     });
-    
+
     if (!orderRes.ok) throw new Error("Failed to create order");
     const order = await orderRes.json();
 
-    // 2. Configure Razorpay Options
     const options = {
-      key: "rzp_test_TbnCjuzHe8P0cj",
+      key: razorpayKeyId,
       amount: order.amount,
       currency: order.currency,
       name: "KumariHUB",
-      description: "Business Listing Verification Fee (₹199)",
+      description: "Business Listing Fee - ₹199 (Inclusive of all taxes)",
       order_id: order.id,
+      ...(plan && { description: `Business Advertisement - ${plan.days} days - INR ${plan.amount}` }),
+
+
+      config: {
+        display: {
+          blocks: {
+            upi: {
+              name: "Pay using UPI",
+              instruments: [
+                {
+                  method: "upi"
+                }
+              ]
+            }
+          },
+          sequence: ["block.upi", "block.card", "block.netbanking"],
+          preferences: {
+            show_default_blocks: true
+          }
+        }
+      },
+
+
       handler: async function (response) {
-        // Payment success aana antha response-ai callback moolama anupprom
         onSuccess(response);
       },
       prefill: {

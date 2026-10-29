@@ -1,293 +1,38 @@
 const express = require('express');
 const router = express.Router();
-const Business = require('../models/Business');
-const Review = require('../models/Review');
+const { pool } = require('../db');
+const { camelize, normalizePhone } = require('../utils/records');
+const verifyRazorpayPayment = require('../utils/verifyRazorpayPayment');
+const authenticateAdmin = require('../utils/adminAuth');
+const businessFields = ['ownerName','businessName','category','address','location','phone','whatsapp','services','aboutBusness','img','timing','locationLink','status','premium','avgRating','reviewCount','expiryDate','paymentId'];
+const slug = (value='') => decodeURIComponent(value).replace(/[-_]/g, ' ').trim();
+const pattern = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '[\\s-]+');
+const findBusiness = async (category, location, name) => {
+  const result = await pool.query('SELECT * FROM businesses WHERE category ~* $1 AND location ~* $2 AND "businessName" ~* $3 LIMIT 1', [`^${pattern(category)}$`, `^${pattern(location)}$`, `^${pattern(name)}$`]);
+  return camelize(result.rows[0]);
+};
+const reviewsFor = async (id) => (await pool.query('SELECT id, "userName", rating, comment, "createdAt" FROM reviews WHERE "businessId"=$1 ORDER BY "createdAt" DESC', [id])).rows.map(camelize);
+const relatedFor = async (business) => (await pool.query('SELECT * FROM businesses WHERE category=$1 AND id<>$2 LIMIT 5', [business.category, business._id])).rows.map(camelize);
+const updateBusiness = async (id, fields) => {
+  const keys = Object.keys(fields).filter((key) => businessFields.includes(key));
+  if (!keys.length) return camelize((await pool.query('SELECT * FROM businesses WHERE id=$1', [id])).rows[0]);
+  const sets = keys.map((key, i) => `"${key}"=$${i + 1}`).join(', ');
+  const values = keys.map((key) => ['phone','whatsapp'].includes(key) ? normalizePhone(fields[key]) : ['services','timing'].includes(key) ? JSON.stringify(fields[key]) : fields[key]);
+  const result = await pool.query(`UPDATE businesses SET ${sets} WHERE id=$${keys.length + 1} RETURNING *`, [...values, id]);
+  return camelize(result.rows[0]);
+};
 
-
-router.get('/search/list', async (req, res) => {
-  try {
-    const { q } = req.query;
-    if (!q) return res.json([]);
-
-    const businesses = await Business.find({
-      $or: [
-        { businessName: { $regex: q, $options: 'i' } },
-        { category: { $regex: q, $options: 'i' } },
-        { location: { $regex: q, $options: 'i' } }
-      ]
-    });
-
-    return res.json(businesses);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-router.get('/slug', async (req, res) => {
-  try {
-    const { category, location, name } = req.query;
-
-    if (!category || !location || !name) {
-      return res.status(400).json({ message: "Missing required query parameters" });
-    }
-
-    const cleanCategory = decodeURIComponent(category).replace(/[-_]/g, ' ').trim();
-    const cleanLocation = decodeURIComponent(location).replace(/[-_]/g, ' ').trim();
-    const cleanName = decodeURIComponent(name).replace(/[-_]/g, ' ').trim();
-
-    const business = await Business.findOne({
-      category: { $regex: new RegExp(`^${cleanCategory}$`, 'i') },
-      location: { $regex: new RegExp(`^${cleanLocation}$`, 'i') },
-      businessName: { $regex: new RegExp(`^${cleanName}$`, 'i') }
-    });
-
-    if (!business) {
-      return res.status(404).json({ message: "Business not found" });
-    }
-
-    const reviewDoc = await Review.findOne({ businessId: business._id });
-    const reviews = reviewDoc && reviewDoc.businessReview ? reviewDoc.businessReview : [];
-
-    const related = await Business.find({
-      category: business.category,
-      _id: { $ne: business._id }
-    }).limit(5);
-
-    res.json({ business, reviews, related });
-
-  } catch (err) {
-    console.error("Server Error in getBusinessBySlug:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-router.post('/add', async (req, res) => {
-  try {
-    let businessData = req.body;
-    
-    if (!businessData.expiryDate) {
-      const oneYearFromNow = new Date();
-      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-      businessData.expiryDate = oneYearFromNow;
-    }
-
-    const newBusiness = new Business(businessData);
-    const savedBusiness = await newBusiness.save();
-    res.status(201).json(savedBusiness);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-
-router.post('/reviews', async (req, res) => {
-  try {
-    const { businessId, rating, comment, userName } = req.body;
-
-    if (!businessId || !rating || !comment || !userName) {
-      return res.status(400).json({ error: "All fields are required" });
-    }
-
-    const newReview = new Review({
-      businessId,
-      rating,
-      comment,
-      userName
-    });
-    await newReview.save();
-
-    const allReviews = await Review.find({ businessId });
-    const totalReviews = allReviews.length;
-    const avgRating = totalReviews > 0 
-      ? Number((allReviews.reduce((acc, item) => acc + item.rating, 0) / totalReviews).toFixed(1))
-      : 5;
-
-    const updatedBusiness = await Business.findByIdAndUpdate(
-      businessId, 
-      { avgRating, reviewCount: totalReviews },
-      { returnDocument: 'after' }
-    );
-
-    const reviews = await Review.find({ businessId }).sort({ createdAt: -1 });
-    const related = await Business.find({
-      category: updatedBusiness.category,
-      _id: { $ne: businessId }
-    }).limit(5);
-
-    res.status(201).json({
-      business: updatedBusiness,
-      reviews,
-      related
-    });
-
-  } catch (err) {
-    console.error("Error posting review:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-
-router.get('/category/:categoryName', async (req, res) => {
-  try {
-    const { categoryName } = req.params;
-    const cleanCategory = decodeURIComponent(categoryName).replace(/[-_]/g, ' ').trim();
-    
-    const businesses = await Business.find({ 
-      category: { $regex: new RegExp(`^${cleanCategory}$`, 'i') },
-      status: "active"
-    });
-    res.json(businesses);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.get('/location/:locationName', async (req, res) => {
-  try {
-    const { locationName } = req.params;
-    const cleanLocation = decodeURIComponent(locationName).replace(/[-_]/g, ' ').trim();
-
-    const businesses = await Business.find({ 
-      location: { $regex: new RegExp(`^${cleanLocation}$`, 'i') },
-      status: "active"
-    });
-    res.json(businesses);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.get('/:categoryName/:locationName', async (req, res) => {
-  try {
-    const { categoryName, locationName } = req.params;
-    
-    const cleanCategory = decodeURIComponent(categoryName).replace(/[-_]/g, ' ').trim();
-    const cleanLocation = decodeURIComponent(locationName).replace(/[-_]/g, ' ').trim();
-
-    const businesses = await Business.find({ 
-      category: { $regex: new RegExp(`^${cleanCategory}$`, 'i') },
-      location: { $regex: new RegExp(`^${cleanLocation}$`, 'i') },
-      status: "active"
-    });
-    res.json(businesses);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-
-router.get('/', async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 9; 
-    const skip = (page - 1) * limit;
-
-    const query = req.query.all === 'true' ? {} : { status: "active" };
-
-    const businesses = await Business.find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const total = await Business.countDocuments(query);
-
-    res.json({
-      businesses,
-      currentPage: page,
-      totalPages: Math.ceil(total / limit),
-      hasMore: skip + businesses.length < total
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-
-router.put('/approve/:id', async (req, res) => {
-  try {
-    const updatedBusiness = await Business.findByIdAndUpdate(
-      req.params.id, 
-      { status: 'active' }, 
-      { returnDocument: 'after' }
-    );
-    if (!updatedBusiness) return res.status(404).json({ error: "Business not found" });
-    res.json(updatedBusiness);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.put('/activate/:id', async (req, res) => {
-  try {
-    const updatedBusiness = await Business.findByIdAndUpdate(
-      req.params.id, 
-      { status: 'active' }, 
-      { returnDocument: 'after' }
-    );
-    if (!updatedBusiness) return res.status(404).json({ error: "Business not found" });
-    res.json(updatedBusiness);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.put('/inactive/:id', async (req, res) => {
-  try {
-    const updatedBusiness = await Business.findByIdAndUpdate(
-      req.params.id, 
-      { status: 'inactive' }, 
-      { returnDocument: 'after' }
-    );
-    if (!updatedBusiness) return res.status(404).json({ error: "Business not found" });
-    res.json(updatedBusiness);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.put('/:id', async (req, res) => {
-  try {
-    const updatedBusiness = await Business.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        returnDocument: 'after',
-        runValidators: true
-      }
-    );
-    if (!updatedBusiness) return res.status(404).json({ error: "Business not found" });
-    res.json(updatedBusiness);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.delete('/:id', async (req, res) => {
-  try {
-    const deletedBusiness = await Business.findByIdAndDelete(req.params.id);
-    if (!deletedBusiness) return res.status(404).json({ error: "Business not found" });
-    res.json({ message: "Business deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-
-router.get('/:id', async (req, res) => {
-  try {
-    const business = await Business.findById(req.params.id);
-    if (!business) {
-      return res.status(404).json({ message: "Business not found" });
-    }
-    res.json(business);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-module.exports = router;
+router.get('/search/list', async (req,res) => { try { const q=String(req.query.q||''); if(!q) return res.json([]); const rows=await pool.query('SELECT * FROM businesses WHERE "businessName" ILIKE $1 OR category ILIKE $1 OR location ILIKE $1', [`%${q}%`]); res.json(rows.rows.map(camelize)); } catch(e){res.status(500).json({error:e.message});} });
+router.get('/slug', async (req,res) => { try { const {category,location,name}=req.query; if(!category||!location||!name)return res.status(400).json({message:'Missing required query parameters'}); const business=await findBusiness(slug(category),slug(location),slug(name)); if(!business)return res.status(404).json({message:'Business not found'}); res.json({business,reviews:await reviewsFor(business._id),related:await relatedFor(business)}); }catch(e){res.status(500).json({error:e.message});} });
+router.post('/admin/add', authenticateAdmin, async(req,res)=>{ try { const data={...req.body,status:'active',premium:Boolean(req.body.premium)}; data.expiryDate ||= new Date(Date.now()+365*24*60*60*1000); data.phone=normalizePhone(data.phone); data.whatsapp=normalizePhone(data.whatsapp); const keys=businessFields.filter(k=>k!=='paymentId'&&data[k]!==undefined); const vals=keys.map(k=>['services','timing'].includes(k)?JSON.stringify(data[k]):data[k]); const cols=keys.map(k=>`"${k}"`).join(', '), placeholders=keys.map((_,i)=>`$${i+1}`).join(', '); const row=(await pool.query(`INSERT INTO businesses (${cols}) VALUES (${placeholders}) RETURNING *`,vals)).rows[0]; res.status(201).json(camelize(row)); }catch(e){res.status(400).json({error:e.message});} });router.post('/add', verifyRazorpayPayment, async(req,res)=>{ try { const data={...req.body,paymentId:req.verifiedPaymentId,status:'pending',premium:false}; data.expiryDate ||= new Date(Date.now()+365*24*60*60*1000); data.phone=normalizePhone(data.phone); data.whatsapp=normalizePhone(data.whatsapp); const keys=businessFields.filter(k=>data[k]!==undefined); const vals=keys.map(k=>['services','timing'].includes(k)?JSON.stringify(data[k]):data[k]); const cols=keys.map(k=>`"${k}"`).join(', '), placeholders=keys.map((_,i)=>`$${i+1}`).join(', '); const row=(await pool.query(`INSERT INTO businesses (${cols}) VALUES (${placeholders}) RETURNING *`,vals)).rows[0]; res.status(201).json(camelize(row)); }catch(e){res.status(400).json({error:e.message});} });
+router.post('/reviews', async(req,res)=>{ try {const {businessId,rating,comment,userName}=req.body;if(!businessId||!rating||!comment||!userName)return res.status(400).json({error:'All fields are required'});const result=await pool.query('INSERT INTO reviews ("businessId",rating,comment,"userName") VALUES ($1,$2,$3,$4) RETURNING *',[businessId,rating,comment,userName]);const stats=(await pool.query('SELECT COUNT(*)::int AS count, ROUND(AVG(rating),1) AS avg FROM reviews WHERE "businessId"=$1',[businessId])).rows[0];const business=await updateBusiness(businessId,{avgRating:stats.avg,reviewCount:stats.count});if(!business)return res.status(404).json({error:'Business not found'});res.status(201).json({business,reviews:await reviewsFor(businessId),related:await relatedFor(business)});}catch(e){res.status(500).json({error:e.message});} });
+router.get('/category/:categoryName',async(req,res)=>listMatching(req,res,'category',slug(req.params.categoryName)));
+router.get('/location/:locationName',async(req,res)=>listMatching(req,res,'location',slug(req.params.locationName)));
+async function listMatching(req,res,field,value){try{const rows=await pool.query(`SELECT * FROM businesses WHERE "${field}" ~* $1 AND status='active'`,[`^${pattern(value)}$`]);res.json(rows.rows.map(camelize));}catch(e){res.status(500).json({error:e.message});}}
+router.get('/:categoryName/:locationName',async(req,res)=>{try{const rows=await pool.query('SELECT * FROM businesses WHERE category ~* $1 AND location ~* $2 AND status=$3',[`^${pattern(slug(req.params.categoryName))}$`,`^${pattern(slug(req.params.locationName))}$`,'active']);res.json(rows.rows.map(camelize));}catch(e){res.status(500).json({error:e.message});}});
+router.get('/',(req,res,next)=>req.query.all==='true'?authenticateAdmin(req,res,next):next(),async(req,res)=>{try{const page=Math.max(1,parseInt(req.query.page)||1),limit=Math.min(100,Math.max(1,parseInt(req.query.limit)||9)),offset=(page-1)*limit;const active=req.query.all!=='true';const rows=await pool.query(`SELECT * FROM businesses ${active?"WHERE status='active'":''} ORDER BY "createdAt" DESC LIMIT $1 OFFSET $2`,[limit,offset]);const total=Number((await pool.query(`SELECT COUNT(*) FROM businesses ${active?"WHERE status='active'":''}`)).rows[0].count);const businesses=rows.rows.map(camelize);res.json({businesses,currentPage:page,totalPages:Math.ceil(total/limit),hasMore:offset+businesses.length<total});}catch(e){res.status(500).json({error:e.message});}});
+for(const [route,status] of [['/approve/:id','active'],['/activate/:id','active'],['/inactive/:id','inactive']]) router.put(route,authenticateAdmin,async(req,res)=>{try{const business=await updateBusiness(req.params.id,{status});if(!business)return res.status(404).json({error:'Business not found'});res.json(business);}catch(e){res.status(500).json({error:e.message});}});
+router.put('/:id',authenticateAdmin,async(req,res)=>{try{const business=await updateBusiness(req.params.id,req.body);if(!business)return res.status(404).json({error:'Business not found'});res.json(business);}catch(e){res.status(500).json({error:e.message});}});
+router.delete('/:id',authenticateAdmin,async(req,res)=>{try{const r=await pool.query('DELETE FROM businesses WHERE id=$1 RETURNING id',[req.params.id]);if(!r.rowCount)return res.status(404).json({error:'Business not found'});res.json({message:'Business deleted successfully'});}catch(e){res.status(500).json({error:e.message});}});
+router.get('/:id',authenticateAdmin,async(req,res)=>{try{const r=await pool.query('SELECT * FROM businesses WHERE id=$1',[req.params.id]);if(!r.rowCount)return res.status(404).json({message:'Business not found'});res.json(camelize(r.rows[0]));}catch(e){res.status(500).json({error:e.message});}});
+module.exports=router;

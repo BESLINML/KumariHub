@@ -54,7 +54,7 @@ const SearchBox = ({navbar}) => {
 
   return (
     <div className="w-full h-full mx-auto relative text-black">
-      {/* Search Input Box */}
+
       <div className={`flex items-center border shadow-sm shadow-[#DBA55C]/20 h-full rounded-full px-3 gap-2 ${navbar ? "border-[#664a26]/10 bg-white" : "border-[#664a26]"}`}>
         <div className="md:ps-2 flex items-center justify-center w-full gap-3">
           <Search className={`w-4 md:w-5 shrink-0 ${navbar?"text-black/60":" text-white/70"}`} />
@@ -71,7 +71,7 @@ const SearchBox = ({navbar}) => {
         </div>
       </div>
 
-      {/* Results Dropdown Container */}
+
       {searchTerm && (
         <div className="absolute left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 max-h-96 overflow-y-auto scrollbar-none z-50 p-4">
           <p className="text-sm text-gray-500 mb-3">

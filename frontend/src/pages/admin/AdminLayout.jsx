@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { adminFetch } from '../../utils/adminFetch';
 import AdminSlideBar from './AdminSlideBar'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { useAdmin } from '../../context/AdminContext';
@@ -141,7 +142,7 @@ const AdminLayout = () => {
     };
 
     try {
-      const response = await fetch(`${API_URL}/api/businesses/add`, {
+      const response = await adminFetch(`${API_URL}/api/businesses/admin/add`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newBusinessObject)
@@ -159,12 +160,12 @@ const AdminLayout = () => {
           timing: formData.timing
         });
 
-        // Database-la irunthu varra category, location, businessName-ai vachi URL-ai generate panrathu
+
         const savedCategory = data.category || data.business?.category || finalCategory;
         const savedLocation = data.location || data.business?.location || finalLocation;
         const savedName = data.businessName || data.business?.businessName || formData.businessName;
 
-        // URL-kku anuppa spaces-ai hyphen (-) ah maathurathu (slug format)
+
         const createSlug = (str) => str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
         if (savedCategory && savedLocation && savedName) {
@@ -172,7 +173,7 @@ const AdminLayout = () => {
           const locSlug = createSlug(savedLocation);
           const nameSlug = createSlug(savedName);
 
-          // Neenga sonna model link format-laye redirect aagum!
+
           navigate(`/${catSlug}/${locSlug}/${nameSlug}`);
         }
 
@@ -191,7 +192,7 @@ const AdminLayout = () => {
     if (!newCatName.trim()) return;
 
     try {
-      const response = await fetch(`${API_URL}/api/categories/add`, {
+      const response = await adminFetch(`${API_URL}/api/categories/add`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newCatName.trim(), img: newCatImg }),
@@ -205,7 +206,7 @@ const AdminLayout = () => {
         setNewCatImg('');
         setIsModalOpen(false);
 
-        const catRes = await fetch(`${API_URL}/api/categories`);
+        const catRes = await adminFetch(`${API_URL}/api/categories`);
         const catData = await catRes.json();
         if (catRes.ok) {
           setCategory(catData);
@@ -226,7 +227,7 @@ const AdminLayout = () => {
     if (!newLocName.trim()) return;
 
     try {
-      const response = await fetch(`${API_URL}/api/locations/add`, {
+      const response = await adminFetch(`${API_URL}/api/locations/add`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ locationName: newLocName.trim() }),
@@ -239,7 +240,7 @@ const AdminLayout = () => {
         setNewLocName('');
         setIsModalOpen(false);
 
-        const locRes = await fetch(`${API_URL}/api/locations`);
+        const locRes = await adminFetch(`${API_URL}/api/locations`);
         const locData = await locRes.json();
         if (locRes.ok) {
           setLocationsList(locData);
@@ -253,17 +254,17 @@ const AdminLayout = () => {
       alert("Server error!");
     }
   };
-  
+
 
   return (
     <div className="bg-white md:h-screen flex flex-col overflow-hidden mb-15 md:mb-0">
       <div className='flex flex-col-reverse md:flex-row h-full'>
-        {/* Sidebar Fixed Width */}
+
         <div className="w-full md:w-[30%] xl:w-[20%] md:h-full shrink-0 fixed md:static z-50">
           <AdminSlideBar setModalType={setModalType} setIsModalOpen={setIsModalOpen} />
         </div>
 
-        {/* Main Content Area */}
+
         <main className="md:w-[70%] xl:w-[80%]">
           {loading?(
             <div className="flex justify-center items-center py-10 gap-3 sm:gap-5 h-screen">
@@ -273,15 +274,15 @@ const AdminLayout = () => {
           ):
             <Outlet />
           }
-          
+
         </main>
       </div>
 
-      {/* Global Modals (Add Business, Category, Location) */}
+
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-3 sm:p-4 overflow-y-auto">
 
-          {/* 1. ADD BUSINESS MODAL */}
+
           {modalType === 'business' && (
             <div className="bg-white rounded-3xl w-full max-w-3xl p-6 sm:p-8 shadow-2xl relative my-8 max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden">
               <button onClick={() => setIsModalOpen(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-700 cursor-pointer">
@@ -375,7 +376,7 @@ const AdminLayout = () => {
                   <input type="url" name="locationLink" value={formData.locationLink} onChange={handleChange} placeholder="https://maps.app.goo.gl/..." className="w-full mt-1 border border-gray-300 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#D4AF37]" />
                 </div>
 
-                {/* Timings */}
+
                 <div className="border border-gray-200 rounded-2xl p-4 bg-gray-50/50">
                   <div className="flex items-center gap-2 mb-3">
                     <Clock className="w-4 h-4 text-[#D4AF37]" />
@@ -403,15 +404,15 @@ const AdminLayout = () => {
                   </div>
                 </div>
 
-                {/* Premium Badge Checkbox */}
+
                 <div className="flex items-center gap-2 pt-2">
                   <input type="checkbox" name="premium" id="premiumCheckbox" checked={formData.premium} onChange={handleChange} className="w-4 h-4 accent-[#D4AF37] cursor-pointer" />
                   <label htmlFor="premiumCheckbox" className="text-xs font-semibold text-gray-700 cursor-pointer">
-                    Mark as Premium Listing ⭐
+                    Mark as Premium Listing â­
                   </label>
                 </div>
 
-                {/* Submit Button */}
+
                 <div className="pt-4">
                   <button type="submit" className="w-full bg-[#1A2E26] text-[#D4AF37] py-3 rounded-xl font-bold text-sm hover:bg-black transition-colors cursor-pointer shadow-lg">
                     Save & Publish Business
@@ -421,7 +422,7 @@ const AdminLayout = () => {
             </div>
           )}
 
-          {/* 2. ADD CATEGORY MODAL */}
+
           {modalType === 'category' && (
             <div className="bg-white rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl relative">
               <button onClick={() => setIsModalOpen(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-700 cursor-pointer">
@@ -458,7 +459,7 @@ const AdminLayout = () => {
             </div>
           )}
 
-          {/* 3. ADD LOCATION MODAL */}
+
           {modalType === 'location' && (
             <div className="bg-white rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl relative">
               <button onClick={() => setIsModalOpen(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-700 cursor-pointer">

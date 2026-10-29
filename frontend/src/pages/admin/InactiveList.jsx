@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { adminFetch } from '../../utils/adminFetch';
 import { useAdmin } from '../../context/AdminContext';
 
 const InactiveList = () => {
@@ -18,7 +19,7 @@ const InactiveList = () => {
 
   const handleActivate = async (id) => {
     try {
-      const response = await fetch(`${API_URL}/api/businesses/activate/${id}`, {
+      const response = await adminFetch(`${API_URL}/api/businesses/activate/${id}`, {
         method: 'PUT',
       });
 
@@ -36,7 +37,7 @@ const InactiveList = () => {
 
   const handleDelete = async (id) => {
     try {
-      const response = await fetch(`${API_URL}/api/businesses/${id}`, {
+      const response = await adminFetch(`${API_URL}/api/businesses/${id}`, {
         method: 'DELETE',
       });
 
@@ -82,7 +83,7 @@ const InactiveList = () => {
                   </span>
                 </div>
 
-                <p className="text-[11px] text-[#D4AF37] font-semibold truncate mb-2">{business.category} • {business.location}</p>
+                <p className="text-[11px] text-[#D4AF37] font-semibold truncate mb-2">{business.category} â€¢ {business.location}</p>
                 <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">{business.aboutBusness}</p>
               </div>
 
