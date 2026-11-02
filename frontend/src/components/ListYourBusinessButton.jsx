@@ -106,8 +106,8 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
   };
 
   const handleSubmit = async (e) => {
-    setIsSubmiting(true)
     e.preventDefault();
+    setIsSubmiting(true);
 
     const finalCategory = formData.category === "Other" ? formData.customCategory : formData.category;
     const finalLocation = formData.location === "Other" ? formData.customLocation : formData.location;
@@ -142,6 +142,28 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
     };
 
     // 1. Trigger Razorpay Payment First (₹199)
+    if (isAdvertisement) {
+      try {
+        const params = new URLSearchParams({ businessName: formData.businessName.trim(), phone: formData.phone.trim() });
+        const eligibilityResponse = await fetch(`${API_URL}/api/advertisements/eligibility?${params}`);
+        const eligibility = await eligibilityResponse.json();
+        if (!eligibilityResponse.ok || !eligibility.eligible) {
+          setNotifyConfig({
+            isPopUpOpen: true,
+            title: 'Business listing required',
+            dis: eligibility.error || 'Only businesses already listed on KumariHub can advertise. Use the same business name and phone number as your listing.',
+            type: 'error',
+          });
+          setIsSubmiting(false);
+          return;
+        }
+      } catch {
+        setNotifyConfig({ isPopUpOpen: true, title: 'Could not verify listing', dis: 'Please try again in a moment.', type: 'error' });
+        setIsSubmiting(false);
+        return;
+      }
+    }
+
     handlePayment(API_URL, { businessName: formData.businessName, phone: formData.phone }, async (paymentResponse) => {
       try {
         const submission = isAdvertisement

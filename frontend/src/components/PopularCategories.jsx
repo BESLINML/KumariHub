@@ -121,16 +121,17 @@ const PopularCategories = ({ category, selectedCategory }) => {
 
       <div
         ref={scrollRef}
-        className="flex gap-4 pb-4 overflow-x-auto snap-x snap-mandatory scroll-smooth scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        className="flex gap-4 px-1 pt-2 pb-4 overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       >
         {category && category.map((item, i) => (
           <Link
           key={i}
           to={`/${categorySlug(item.name)}`}
+          className="snap-start shrink-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 focus-visible:ring-offset-2"
           >
           <div
             key={i}
-            className={`snap-start h-full bg-linear-to-b bg-white rounded-xl w-28 sm:w-30 p-3 py-5 shadow-md text-white flex flex-col justify-center text-center gap-2 items-center shrink-0 border-2 cursor-pointer transition-all ${selectedCategory === item.name ? 'border-amber-700 scale-105' : 'border-transparent'}`}
+            className="h-full bg-white rounded-xl w-28 sm:w-30 p-3 py-5 shadow-md flex flex-col justify-center text-center gap-2 items-center border-2 border-transparent cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:scale-105 hover:border-[#D4AF37] active:-translate-y-1 active:scale-105 active:border-[#D4AF37]"
           >
             <img src={item.img || categoryIcons[item.name]} className="w-8 h-8 object-cover object-center bg-white p-1 rounded-full shadow" alt={item.name} />
             <h3 className="text-xs  font-bold w-full text-black">{item.name}</h3>

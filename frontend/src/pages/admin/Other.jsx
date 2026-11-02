@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { adminFetch } from '../../utils/adminFetch';
-import BusinessProfileCard from '../../components/BusinessProfileCard';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import BusinessProfileCard from '../../components/BusinessProfileCard';
 import { categoryIcons } from '../../components/PopularCategories';
 import { Shapes } from 'lucide-react';
 
 const Other = () => {
 
-  const { businesses } = useAdmin();
+  const { adminFetch } = useAdmin();
   const API_URL = import.meta.env.VITE_API_URL;
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const view = searchParams.get('view') === 'locations' ? 'locations' : 'categories';
 
@@ -23,73 +23,64 @@ const Other = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [businessCounts, setBusinessCounts] = useState({ categories: [], locations: [] });
+  const [selection, setSelection] = useState(null);
+  const [relatedBusinesses, setRelatedBusinesses] = useState([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
+  const [relatedError, setRelatedError] = useState('');
 
+  useEffect(() => {
+    let isMounted = true;
+    adminFetch(`${API_URL}/api/businesses/admin/counts`)
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Could not load business counts.');
+        if (isMounted) setBusinessCounts(data);
+      })
+      .catch((error) => console.error('Could not load location and category counts:', error));
+    return () => { isMounted = false; };
+  }, []);
 
-  const handleDeleteCategory = async (catToDelete) => {
-    const isConfirmed = window.confirm(`Are you sure you want to delete the category, It may colapce the link of the business created at this category "${catToDelete}"?`);
-    if (!isConfirmed) return;
+  const categoryCounts = useMemo(() => {
+    const counts = new Map();
+    businessCounts.categories.forEach(({ name, businessCount }) => counts.set(String(name).trim().toLocaleLowerCase(), businessCount));
+    return counts;
+  }, [businessCounts.categories]);
+  const locationCounts = useMemo(() => {
+    const counts = new Map();
+    businessCounts.locations.forEach(({ name, businessCount }) => counts.set(String(name).trim().toLocaleLowerCase(), businessCount));
+    return counts;
+  }, [businessCounts.locations]);
+  const rankedCategories = useMemo(() => [...category].sort((left, right) => {
+    const leftName = typeof left === 'object' && left !== null ? (left.name || left.categoryName || '') : left;
+    const rightName = typeof right === 'object' && right !== null ? (right.name || right.categoryName || '') : right;
+    const countDifference = (categoryCounts.get(String(rightName).trim().toLocaleLowerCase()) || 0) - (categoryCounts.get(String(leftName).trim().toLocaleLowerCase()) || 0);
+    return countDifference || String(leftName).localeCompare(String(rightName));
+  }), [category, categoryCounts]);
+  const rankedLocations = useMemo(() => [...locationsList].sort((left, right) => {
+    const leftName = typeof left === 'object' && left !== null ? left.locationName : left;
+    const rightName = typeof right === 'object' && right !== null ? right.locationName : right;
+    const countDifference = (locationCounts.get(String(rightName).trim().toLocaleLowerCase()) || 0) - (locationCounts.get(String(leftName).trim().toLocaleLowerCase()) || 0);
+    return countDifference || String(leftName).localeCompare(String(rightName));
+  }), [locationsList, locationCounts]);
 
+  const selectItem = async (type, name) => {
+    setSelection({ type, name });
+    setRelatedBusinesses([]);
+    setRelatedLoading(true);
+    setRelatedError('');
     try {
-
-      const response = await adminFetch(`${API_URL}/api/categories/${encodeURIComponent(catToDelete)}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete from database');
-      }
-
-
-      const updatedCategories = category.filter((cat) => {
-        const name = typeof cat === 'object' && cat !== null ? (cat.name || cat.categoryName) : cat;
-        return name !== catToDelete;
-      });
-      setCategory(updatedCategories);
-      localStorage.setItem('admin_categories', JSON.stringify(updatedCategories));
-
-      alert("Category deleted successfully from Database & LocalStorage! ");
+      const params = new URLSearchParams({ type, name });
+      const response = await adminFetch(`${API_URL}/api/businesses/admin/related?${params}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not load related businesses.');
+      setRelatedBusinesses(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Error deleting category:", error);
-      alert("Failed to delete category from database.");
+      setRelatedError(error.message || 'Could not load related businesses.');
+    } finally {
+      setRelatedLoading(false);
     }
   };
-
-
-  const handleDeleteLocation = async (locToDelete) => {
-    const isConfirmed = window.confirm(`Are you sure you want to delete the location, It may colapce the link of the business created at this Location "${locToDelete}"?`);
-    if (!isConfirmed) return;
-
-    try {
-
-      const response = await adminFetch(`${API_URL}/api/locations/${encodeURIComponent(locToDelete)}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete from database');
-      }
-
-
-      const updatedLocations = locationsList.filter((loc) => {
-        const name = typeof loc === 'object' && loc !== null ? loc.locationName : loc;
-        return name !== locToDelete;
-      });
-      setLocationsList(updatedLocations);
-      localStorage.setItem('admin_locations', JSON.stringify(updatedLocations));
-
-      alert("Location deleted successfully from Database & LocalStorage!");
-    } catch (error) {
-      console.error("Error deleting location:", error);
-      alert("Failed to delete location from database.");
-    }
-  };
-  const filteredBusinesses = businesses.filter(b => {
-    if (selectedCategory) return b.category === selectedCategory;
-    if (selectedLocation) return b.location === selectedLocation;
-    return true;
-  });
 
   return (
     <div className="flex flex-col h-screen overflow-y-scroll p-5">
@@ -98,25 +89,19 @@ const Other = () => {
 
         {view !== 'locations' && <div className="space-y-3 bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
           <p className="flex items-center gap-2 text-base font-serif font-bold text-[#1A2E26]"><Shapes aria-hidden="true" className="w-5 h-5 text-[#D4AF37] shrink-0" />Top Categories</p>
-          <div className="space-y-3 h-70 overflow-y-scroll scrollbar-none lg:p-5">
-            {category.map((cat, idx) => {
+          <div className="space-y-3 lg:p-5">
+            {rankedCategories.map((cat, idx) => {
               const catName = typeof cat === 'object' && cat !== null ? (cat.name || cat.categoryName) : cat;
+              const businessCount = categoryCounts.get(String(catName).trim().toLocaleLowerCase()) || 0;
               return (
 
-                <div key={cat.id || catName || idx} className="bg-[#EAEFEA]/50 w-full rounded-2xl p-3 flex justify-between" >
+                <button type="button" key={cat.id || catName || idx} onClick={() => selectItem('category', catName)} className={`bg-[#EAEFEA]/50 w-full rounded-2xl p-3 flex items-center justify-between text-left hover:bg-[#EAEFEA] ${selection?.type === 'category' && selection.name === catName ? 'ring-2 ring-[#DBA55C]' : ''}`}>
                   <div className="flex items-center gap-5">
                     <img src={cat.img || categoryIcons[catName]} className="w-10 h-10 sm:w-8 sm:h-8 rounded-full object-cover object-center bg-white p-1 shrink-0 shadow" alt={catName} />
-                    <p className="text-xs font-bold text-[#1A2E26] truncate">{catName}</p>
+                  <div className="min-w-0"><p className="text-xs font-bold text-[#1A2E26] truncate">{catName}</p><p className="text-[10px] text-gray-500">{businessCount} {businessCount === 1 ? 'business' : 'businesses'}</p></div>
                   </div>
-                  <button onClick={() => handleDeleteCategory(catName)} className="text-[10px] text-center sm:text-xs font-semibold sm:inline-block bg-white px-3 rounded-md border border-red-200 text-red-500 hover:bg-red-500 hover:text-white">Delete</button>
-                </div>
-                // <BusinessProfileCard
-                //   key={idx}
-                //   businessIMG={cat.img}
-                //   businessName={catName}
-                //   businessStatus="Delete" // Optional: Card-la status-ku pathila text kaattalam
-                //   buttonOnClick={() => handleDeleteCategory(catName)}
-                // />
+                  <span aria-hidden="true" className="text-gray-400">›</span>
+                </button>
               );
             })}
           </div>
@@ -124,22 +109,33 @@ const Other = () => {
 
         {view === 'locations' && <div className="space-y-3 bg-white p-6 rounded-3xl shadow-sm border border-gray-200">
           <p className="text-base font-serif font-bold text-[#1A2E26]">Top Location</p>
-          <div className="space-y-3 h-70 overflow-y-scroll scrollbar-none lg:p-5">
-            {locationsList.map((loc, idx) => {
+          <div className="space-y-3 lg:p-5">
+            {rankedLocations.map((loc, idx) => {
               const locName = typeof loc === 'object' && loc !== null ? loc.locationName : loc;
+              const businessCount = locationCounts.get(String(locName).trim().toLocaleLowerCase()) || 0;
               return (
-                <div key={loc.id || locName || idx} className="bg-[#EAEFEA]/50 w-full rounded-2xl p-3 flex justify-between h-13" >
+                <button type="button" key={loc.id || locName || idx} onClick={() => selectItem('location', locName)} className={`bg-[#EAEFEA]/50 w-full rounded-2xl p-3 flex items-center justify-between text-left hover:bg-[#EAEFEA] ${selection?.type === 'location' && selection.name === locName ? 'ring-2 ring-[#DBA55C]' : ''}`}>
                   <div className="flex items-center gap-5">
-                    <p className="text-xs  font-bold text-[#1A2E26] truncate">{locName}</p>
+                    <div><p className="text-xs font-bold text-[#1A2E26] truncate">{locName}</p><p className="text-[10px] text-gray-500">{businessCount} {businessCount === 1 ? 'business' : 'businesses'}</p></div>
                   </div>
-                  <button onClick={() => handleDeleteLocation (locName)} className="text-[10px] text-center sm:text-xs font-semibold sm:inline-block bg-white px-3 rounded-md border border-red-200 text-red-500 hover:bg-red-500 hover:text-white">Delete</button>
-                </div>
+                  <span aria-hidden="true" className="text-gray-400">›</span>
+                </button>
               );
             })}
           </div>
         </div>}
 
       </div>
+      {selection && <section className="mt-6 space-y-3 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base font-serif font-bold text-[#1A2E26]">Businesses in {selection.name}</h2>
+          <button type="button" onClick={() => { setSelection(null); setRelatedBusinesses([]); setRelatedError(''); }} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50">Close</button>
+        </div>
+        {relatedLoading ? <p className="py-8 text-center text-sm text-gray-500">Loading businesses…</p>
+          : relatedError ? <p role="alert" className="py-8 text-center text-sm text-red-600">{relatedError}</p>
+            : relatedBusinesses.length ? <div className="space-y-3">{relatedBusinesses.map((business) => <div key={business._id} role="button" tabIndex={0} onClick={() => navigate(`/admin-dashBoard/business/${business._id}`)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); navigate(`/admin-dashBoard/business/${business._id}`); } }} className="cursor-pointer rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"><BusinessProfileCard businessName={business.businessName} location={business.location} category={business.category} businessIMG={business.img} businessStatus={business.status} /></div>)}</div>
+              : <p className="py-8 text-center text-sm text-gray-500">No businesses are listed in this {selection.type} yet.</p>}
+      </section>}
     </div>
   );
 };

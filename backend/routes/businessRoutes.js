@@ -29,6 +29,28 @@ router.post('/reviews', async(req,res)=>{ try {const {businessId,rating,comment,
 router.get('/category/:categoryName',async(req,res)=>listMatching(req,res,'category',slug(req.params.categoryName)));
 router.get('/location/:locationName',async(req,res)=>listMatching(req,res,'location',slug(req.params.locationName)));
 async function listMatching(req,res,field,value){try{const rows=await pool.query(`SELECT * FROM businesses WHERE "${field}" ~* $1 AND status='active'`,[`^${pattern(value)}$`]);res.json(rows.rows.map(camelize));}catch(e){res.status(500).json({error:e.message});}}
+router.get('/admin/counts', authenticateAdmin, async (_req, res) => {
+  try {
+    const [categories, locations] = await Promise.all([
+      pool.query(`SELECT LOWER(BTRIM(category)) AS name, COUNT(*)::int AS "businessCount" FROM businesses WHERE BTRIM(COALESCE(category, '')) <> '' GROUP BY LOWER(BTRIM(category))`),
+      pool.query(`SELECT LOWER(BTRIM(location)) AS name, COUNT(*)::int AS "businessCount" FROM businesses WHERE BTRIM(COALESCE(location, '')) <> '' GROUP BY LOWER(BTRIM(location))`),
+    ]);
+    res.json({ categories: categories.rows, locations: locations.rows });
+  } catch (error) {
+    res.status(500).json({ error: 'Could not load business counts.' });
+  }
+});
+router.get('/admin/related', authenticateAdmin, async (req, res) => {
+  const field = req.query.type === 'location' ? 'location' : req.query.type === 'category' ? 'category' : null;
+  const name = String(req.query.name || '').trim();
+  if (!field || !name) return res.status(400).json({ error: 'A category or location is required.' });
+  try {
+    const result = await pool.query(`SELECT * FROM businesses WHERE LOWER(BTRIM("${field}"))=LOWER(BTRIM($1)) ORDER BY "createdAt" DESC`, [name]);
+    res.json(result.rows.map(camelize));
+  } catch (error) {
+    res.status(500).json({ error: 'Could not load related businesses.' });
+  }
+});
 router.get('/:categoryName/:locationName',async(req,res)=>{try{const rows=await pool.query('SELECT * FROM businesses WHERE category ~* $1 AND location ~* $2 AND status=$3',[`^${pattern(slug(req.params.categoryName))}$`,`^${pattern(slug(req.params.locationName))}$`,'active']);res.json(rows.rows.map(camelize));}catch(e){res.status(500).json({error:e.message});}});
 router.get('/',(req,res,next)=>req.query.all==='true'?authenticateAdmin(req,res,next):next(),async(req,res)=>{try{const page=Math.max(1,parseInt(req.query.page)||1),limit=Math.min(100,Math.max(1,parseInt(req.query.limit)||9)),offset=(page-1)*limit;const active=req.query.all!=='true';const rows=await pool.query(`SELECT * FROM businesses ${active?"WHERE status='active'":''} ORDER BY "createdAt" DESC LIMIT $1 OFFSET $2`,[limit,offset]);const total=Number((await pool.query(`SELECT COUNT(*) FROM businesses ${active?"WHERE status='active'":''}`)).rows[0].count);const businesses=rows.rows.map(camelize);res.json({businesses,currentPage:page,totalPages:Math.ceil(total/limit),hasMore:offset+businesses.length<total});}catch(e){res.status(500).json({error:e.message});}});
 for(const [route,status] of [['/approve/:id','active'],['/activate/:id','active'],['/inactive/:id','inactive']]) router.put(route,authenticateAdmin,async(req,res)=>{try{const business=await updateBusiness(req.params.id,{status});if(!business)return res.status(404).json({error:'Business not found'});res.json(business);}catch(e){res.status(500).json({error:e.message});}});

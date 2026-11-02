@@ -8,7 +8,8 @@ export const AdminProvider = ({ children }) => {
 
   const API_URL = import.meta.env.VITE_API_URL;
   const [adminToken, setAdminToken] = useState(() => localStorage.getItem('admin_api_token') || '');
-  const [tokenInput, setTokenInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [loginError, setLoginError] = useState('');
   const adminFetch = (url, options = {}) => fetch(url, { ...options, headers: { ...options.headers, Authorization: `Bearer ${adminToken}` } });
 
   const [category, setCategory] = useState(() => {
@@ -81,20 +82,33 @@ export const AdminProvider = ({ children }) => {
 
   const unlockAdmin = async (event) => {
     event.preventDefault();
-    const candidate = tokenInput.trim();
-    const response = await fetch(`${API_URL}/api/admin/dashboard-stats`, { headers: { Authorization: `Bearer ${candidate}` } });
-    if (!response.ok) return alert('Admin access denied. Check the token and try again.');
-    localStorage.setItem('admin_api_token', candidate);
-    setAdminToken(candidate);
-    setTokenInput('');
+    setLoginError('');
+    try {
+      const response = await fetch(`${API_URL}/api/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: passwordInput }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setLoginError(data.error || 'Admin login failed.');
+        return;
+      }
+      localStorage.setItem('admin_api_token', data.token);
+      setAdminToken(data.token);
+      setPasswordInput('');
+    } catch {
+      setLoginError('Could not connect to the server. Please try again.');
+    }
   };
 
   if (!adminToken) return (
     <main className="min-h-screen flex items-center justify-center bg-[#FCF7EF] p-6">
       <form onSubmit={unlockAdmin} className="w-full max-w-sm rounded-2xl bg-white p-6 shadow">
         <h1 className="text-xl font-bold text-[#1C1813]">Admin access</h1>
-        <label className="mt-4 block text-sm" htmlFor="admin-token">Admin API token</label>
-        <input id="admin-token" type="password" autoComplete="current-password" required value={tokenInput} onChange={(event) => setTokenInput(event.target.value)} className="mt-2 w-full rounded-lg border p-3" />
+        <label className="mt-4 block text-sm" htmlFor="admin-password">Password</label>
+        <input id="admin-password" type="password" autoComplete="current-password" required value={passwordInput} onChange={(event) => setPasswordInput(event.target.value)} className="mt-2 w-full rounded-lg border p-3" />
+        {loginError && <p role="alert" className="mt-3 text-sm text-red-600">{loginError}</p>}
         <button className="mt-4 w-full rounded-lg bg-[#1C1813] p-3 font-semibold text-white">Continue</button>
       </form>
     </main>

@@ -18,20 +18,31 @@ app.use('/api/admin', require('./routes/dashboardRoutes'));
 app.post('/api/create-order', require('./utils/paymentController').createOrder);
 app.get('/', (_req, res) => res.send('KumariHub Backend Server is running smoothly!'));
 
-cron.schedule('0 0 * * *', async () => {
+const cleanExpiredRecords = async () => {
   try {
-    const { rowCount } = await pool.query(
+    const { rowCount: expiredBusinessCount } = await pool.query(
       "UPDATE businesses SET status = 'expired' WHERE \"expiryDate\" < NOW() AND status <> 'expired'"
     );
-    console.log(`Cron Job: Updated ${rowCount} businesses to 'expired' status.`);
+    const { rowCount: deletedAdvertisementCount } = await pool.query(
+      'DELETE FROM advertisements WHERE "expiresAt" <= NOW()'
+    );
+    if (expiredBusinessCount || deletedAdvertisementCount) {
+      console.log(`Expiry cleanup: marked ${expiredBusinessCount} businesses expired and deleted ${deletedAdvertisementCount} advertisements.`);
+    }
   } catch (error) {
-    console.error('Error in automatic expiry status update cron job:', error);
+    console.error('Error in automatic expiry cleanup:', error);
   }
-});
+};
+
+// Public queries stop showing ads as soon as they expire; this removes their records too.
+cron.schedule('*/15 * * * *', cleanExpiredRecords);
 
 const PORT = process.env.PORT || 5000;
 initializeDatabase()
-  .then(() => app.listen(PORT, () => console.log(`PostgreSQL connected; server running on port ${PORT}`)))
+  .then(async () => {
+    await cleanExpiredRecords();
+    app.listen(PORT, () => console.log(`PostgreSQL connected; server running on port ${PORT}`));
+  })
   .catch((error) => {
     console.error('PostgreSQL initialization failed:', error);
     process.exit(1);

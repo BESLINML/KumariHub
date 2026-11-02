@@ -246,21 +246,33 @@ const Home = ({ searchTerm, setSearchTerm }) => {
 
   };
 
-  const handleAdvertisementClick = (advertisement) => {
+  const handleAdvertisementClick = async (advertisement) => {
     if (!advertisement) return;
-    const matchingBusiness = businessData.find((business) =>
+    let matchingBusiness = businessData.find((business) =>
+      business.businessName?.trim().toLowerCase() === advertisement.companyName?.trim().toLowerCase() &&
+      String(business.phone || '').replace(/\D/g, '').slice(-10) === String(advertisement.phone || '').replace(/\D/g, '').slice(-10)
+    ) || businessData.find((business) =>
       business.businessName?.trim().toLowerCase() === advertisement.companyName?.trim().toLowerCase() &&
       business.location?.trim().toLowerCase() === advertisement.place?.trim().toLowerCase()
-    ) || businessData.find((business) =>
-      business.businessName?.trim().toLowerCase() === advertisement.companyName?.trim().toLowerCase()
     );
-    const business = matchingBusiness || {
-      businessName: advertisement.companyName,
-      category: advertisement.category,
-      location: advertisement.place,
-    };
+    if (!matchingBusiness) {
+      try {
+        const params = new URLSearchParams({ q: advertisement.companyName || '' });
+        const response = await fetch(`${API_URL}/api/businesses/search/list?${params}`);
+        const matches = response.ok ? await response.json() : [];
+        matchingBusiness = matches.find((business) =>
+          business.businessName?.trim().toLowerCase() === advertisement.companyName?.trim().toLowerCase() &&
+          String(business.phone || '').replace(/\D/g, '').slice(-10) === String(advertisement.phone || '').replace(/\D/g, '').slice(-10)
+        ) || matches.find((business) =>
+          business.businessName?.trim().toLowerCase() === advertisement.companyName?.trim().toLowerCase()
+        );
+      } catch (error) {
+        console.error('Could not find the business for this advertisement:', error);
+      }
+    }
+    const business = matchingBusiness || advertisement;
     const slug = (value) => value ? value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : '';
-    navigate(`/${slug(business.category)}/${slug(business.location)}/${slug(business.businessName)}`);
+    navigate(`/${slug(business.category)}/${slug(business.location || business.place)}/${slug(business.businessName || business.companyName)}`);
   };
 
   return (
@@ -305,7 +317,18 @@ const Home = ({ searchTerm, setSearchTerm }) => {
         <section className="bg-[#1C1813] w-[92%] sm:w-[88%] h-150 md:h-60 rounded-3xl py-6 px-4 sm:px-8">
           <div className="w-full h-full flex flex-col md:flex-row items-center justify-between gap-6">
             {currentAdvertisement ? (
-              <div className="w-full md:w-[70%] text-white flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5 transition-all duration-300 overflow-hidden text-center sm:text-left">
+              <div
+                role="link"
+                tabIndex={0}
+                onClick={() => handleAdvertisementClick(currentAdvertisement)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    handleAdvertisementClick(currentAdvertisement);
+                  }
+                }}
+                className="w-full md:w-[70%] text-white flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5 transition-all duration-300 overflow-hidden text-center sm:text-left cursor-pointer rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
+              >
                 <img src={currentAdvertisement.coverPhoto || fallbackBusinessImage} alt={currentAdvertisement.companyName || 'Advertisement'} className="w-32 h-28 sm:w-44 sm:h-36 object-cover object-center rounded-2xl shrink-0" />
                 <div className="space-y-2 w-full min-w-0">
                   <p className="text-[#DBA55C] text-xs uppercase tracking-widest">Featured Advertisement</p>
@@ -314,7 +337,7 @@ const Home = ({ searchTerm, setSearchTerm }) => {
                   <div className="flex flex-wrap gap-3 sm:gap-5 items-center justify-center sm:justify-start text-amber-100/70 font-light text-xs pt-1">
                     <span className="flex gap-2 items-center"><Tag className="w-4 text-[#DBA55C]" />{currentAdvertisement.category}</span>
                     <span className="flex gap-2 items-center"><MapPinned className="w-4 text-[#DBA55C]" />{currentAdvertisement.place}</span>
-                    <a href={`tel:${currentAdvertisement.phone}`} className="flex gap-2 items-center hover:text-[#DBA55C]"><Phone className="w-3 text-[#DBA55C]" />{currentAdvertisement.phone}</a>
+                    <a href={`tel:${currentAdvertisement.phone}`} onClick={(event) => event.stopPropagation()} className="flex gap-2 items-center hover:text-[#DBA55C]"><Phone className="w-3 text-[#DBA55C]" />{currentAdvertisement.phone}</a>
                   </div>
                   {advertisements.length > 1 && <p className="text-[10px] text-white/40">Ad {advertisementIndex + 1} of {advertisements.length}</p>}
                 </div>
