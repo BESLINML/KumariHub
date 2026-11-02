@@ -20,26 +20,6 @@ export const handlePayment = async (API_URL, businessData, onSuccess, plan = nul
       ...(plan && { description: `Business Advertisement - ${plan.days} days - INR ${plan.amount}` }),
 
 
-      config: {
-        display: {
-          blocks: {
-            upi: {
-              name: "Pay using UPI",
-              instruments: [
-                {
-                  method: "upi"
-                }
-              ]
-            }
-          },
-          sequence: ["block.upi", "block.card", "block.netbanking"],
-          preferences: {
-            show_default_blocks: true
-          }
-        }
-      },
-
-
       handler: async function (response) {
         onSuccess(response);
       },
