@@ -23,8 +23,15 @@ const createOrder = async (req, res) => {
     const order = await razorpay.orders.create(options);
     res.json({ ...order, keyId });
   } catch (error) {
-    console.error("Razorpay order error:", error);
-    res.status(500).json({ error: "Failed to create payment order" });
+    const providerError = error?.error || {};
+    const statusCode = error?.statusCode || null;
+    const code = providerError.code || error?.code || null;
+    const description = providerError.description || null;
+    console.error('Razorpay order error:', { statusCode, code, description, message: description ? undefined : error?.message });
+    const message = statusCode === 401
+      ? 'Razorpay rejected the server API keys. Check that the key ID and secret are a matching test-mode pair.'
+      : description || 'Razorpay could not create the order. Check the backend logs for the provider error.';
+    res.status(502).json({ error: message, code });
   }
 };
 
