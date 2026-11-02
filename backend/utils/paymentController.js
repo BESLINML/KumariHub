@@ -21,7 +21,7 @@ const createOrder = async (req, res) => {
       receipt: "receipt_" + Date.now()
     };
     const order = await razorpay.orders.create(options);
-    res.json(order);
+    res.json({ ...order, keyId });
   } catch (error) {
     console.error("Razorpay order error:", error);
     res.status(500).json({ error: "Failed to create payment order" });

@@ -1,19 +1,17 @@
 export const handlePayment = async (API_URL, businessData, onSuccess, plan = null) => {
   try {
-    const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
-    if (!razorpayKeyId) throw new Error("Razorpay is not configured");
-
     const orderRes = await fetch(`${API_URL}/api/create-order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(plan ? { durationDays: plan.days } : {})
     });
 
-    if (!orderRes.ok) throw new Error("Failed to create order");
     const order = await orderRes.json();
+    if (!orderRes.ok) throw new Error(order.error || "Failed to create order");
+    if (!order.keyId) throw new Error("Razorpay is not configured");
 
     const options = {
-      key: razorpayKeyId,
+      key: order.keyId,
       amount: order.amount,
       currency: order.currency,
       name: "KumariHUB",
