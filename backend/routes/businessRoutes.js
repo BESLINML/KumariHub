@@ -4,7 +4,7 @@ const { pool } = require('../db');
 const { camelize, normalizePhone } = require('../utils/records');
 const verifyRazorpayPayment = require('../utils/verifyRazorpayPayment');
 const authenticateAdmin = require('../utils/adminAuth');
-const businessFields = ['ownerName','businessName','category','address','location','phone','whatsapp','services','aboutBusness','img','timing','locationLink','status','premium','avgRating','reviewCount','expiryDate','paymentId'];
+const businessFields = ['ownerName','businessName','category','address','location','phone','whatsapp','services','aboutBusness','img','timing','locationLink','delivery','status','premium','avgRating','reviewCount','expiryDate','paymentId'];
 const slug = (value='') => decodeURIComponent(value).replace(/[-_]/g, ' ').trim();
 const pattern = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '[\\s-]+');
 const findBusiness = async (category, location, name) => {

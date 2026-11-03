@@ -17,6 +17,7 @@ async function initializeDatabase() {
     );
     CREATE INDEX IF NOT EXISTS businesses_category_location_idx ON businesses (category, location);
     ALTER TABLE businesses ADD COLUMN IF NOT EXISTS "paymentId" TEXT;
+    ALTER TABLE businesses ADD COLUMN IF NOT EXISTS delivery BOOLEAN NOT NULL DEFAULT FALSE;
     CREATE UNIQUE INDEX IF NOT EXISTS businesses_payment_id_unique_idx ON businesses ("paymentId") WHERE "paymentId" IS NOT NULL;
     CREATE TABLE IF NOT EXISTS categories (
       id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL UNIQUE, img TEXT NOT NULL DEFAULT '',
