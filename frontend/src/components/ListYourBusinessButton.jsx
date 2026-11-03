@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { handlePayment } from '../utils/payment';
 import NotificationBar from './NotificationBar';
 
-const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', isAdvertisement = false }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', isAdvertisement = false, open, onOpenChange, showTrigger = true }) => {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = open ?? internalIsOpen;
+  const setIsOpen = onOpenChange ?? setInternalIsOpen;
   const [categoriesList, setCategoriesList] = useState([]);
   const [locationsList, setLocationsList] = useState([]);
   const [issubmiting, setIsSubmiting] = useState(false);
@@ -66,6 +68,7 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
     whatsapp: '',
     locationLink: '',
     services: '',
+    delivery: false,
     img: '',
     timing: {
       monday: { open: "9.00 am", close: "5.00 pm", closed: false },
@@ -127,6 +130,7 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
       whatsapp: Number(formData.whatsapp) || Number(formData.phone),
       locationLink: formData.locationLink || "",
       services: formattedServices,
+      delivery: formData.delivery,
       img: formData.img || "",
       timing: formData.timing,
       status: "pending",
@@ -206,7 +210,7 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
           // setIsOpen(false);
           setFormData({
             ownerName: '', businessName: '', category: '', customCategory: '', location: '', customLocation: '',
-            address: '', aboutBusness: '', phone: '', whatsapp: '', locationLink: '', services: '', img: '',
+            address: '', aboutBusness: '', phone: '', whatsapp: '', locationLink: '', services: '', delivery: false, img: '',
             timing: formData.timing
           });
         } else {
@@ -236,14 +240,16 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className={`bg-linear-to-r from-[#E6C594] to-[#DBA55C] text-[#1C1813] font-bold rounded-full hover:scale-95 hover:shadow-lg hover:shadow-amber-300/25 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${navbar ? 'w-full whitespace-nowrap px-1.5 py-2 text-[10px]' : 'lg:px-10 px-4 py-2 text-[10px] md:text-sm lg:text-base lg:w-70'}`}
-      >
-        <span className="bg-[#1C1813] text-[#DBA55C] rounded-full w-3 h-3 text-center md:w-5 md:h-5 flex items-center justify-center text-xs font-bold">+</span>
-        {buttonLabel}
-      </button>
+      {showTrigger && (
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className={`bg-linear-to-r from-[#E6C594] to-[#DBA55C] text-[#1C1813] font-bold rounded-full hover:scale-95 hover:shadow-lg hover:shadow-amber-300/25 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${navbar ? 'w-full whitespace-nowrap px-1.5 py-2 text-[10px]' : 'lg:px-10 px-4 py-2 text-[10px] md:text-sm lg:text-base lg:w-70'}`}
+        >
+          <span className="bg-[#1C1813] text-[#DBA55C] rounded-full w-3 h-3 text-center md:w-5 md:h-5 flex items-center justify-center text-xs font-bold">+</span>
+          {buttonLabel}
+        </button>
+      )}
 
       {isOpen && (
         <div className={`fixed inset-0 bg-black/40 backdrop-blur-md z-50 overflow-y-auto flex flex-col justify-center items-center p-4 lg:p-10 ${navbar ? "w-screen h-screen" : "w-full h-full"}`}>
@@ -382,6 +388,11 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
                     <label className="text-xs font-semibold text-gray-600">Services (Comma Separated)</label>
                     <input type="text" name="services" value={formData.services} onChange={handleChange} placeholder="Electronics, Appliances, Home Delivery" className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
                   </div>
+
+                  <label className="md:col-span-2 flex items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 cursor-pointer">
+                    <input type="checkbox" checked={formData.delivery} onChange={(event) => setFormData({ ...formData, delivery: event.target.checked })} className="h-4 w-4 accent-[#DBA55C]" />
+                    <span className="text-sm font-semibold text-gray-700">This business offers delivery</span>
+                  </label>
 
 
                   <div className="md:col-span-2">

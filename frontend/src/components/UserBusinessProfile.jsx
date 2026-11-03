@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   Star, MapPin, Phone, MessageCircle, ShieldCheck, Clock,
-  User, Globe, Share2, Award, ThumbsUp, Headphones, Send, Link2
+  User, Globe, Share2, Award, ThumbsUp, Truck, Send, Link2
 } from 'lucide-react';
 import BusinessSEO from './BusinessSEO';
+import ListYourBusinessButton from './ListYourBusinessButton';
+import whatsappIcon from '../assets/svg/whatsapp.svg';
 
 export default function UserBusinessProfile() {
   const { category, location, businessName } = useParams();
@@ -15,6 +17,7 @@ export default function UserBusinessProfile() {
   const [relatedBusinesses, setRelatedBusinesses] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isBusinessFormOpen, setIsBusinessFormOpen] = useState(false);
 
 
   const [newReview, setNewReview] = useState({ rating: 5, comment: '', userName: '' });
@@ -197,7 +200,7 @@ export default function UserBusinessProfile() {
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 bg-[#10b981] hover:bg-[#059669] text-white font-bold py-3 px-4 rounded-xl shadow-sm transition"
                 >
-                  <MessageCircle className="w-4 h-4" /> WhatsApp Chat
+                  <img src={whatsappIcon} className="w-4 h-4" alt="" /> WhatsApp Chat
                 </a>
               </div>
             </div>
@@ -420,19 +423,19 @@ export default function UserBusinessProfile() {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-amber-50 text-amber-700 rounded-lg shrink-0"><Headphones className="w-4 h-4" /></div>
-                <div>
-                  <p className="font-bold text-gray-800">24/7 Support</p>
-                  <p className="text-gray-500 text-[11px]">Always here to help you</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
                 <div className="p-2 bg-amber-50 text-amber-700 rounded-lg shrink-0"><ThumbsUp className="w-4 h-4" /></div>
                 <div>
                   <p className="font-bold text-gray-800">100% Customer Satisfaction</p>
                   <p className="text-gray-500 text-[11px]">Customer satisfaction is our priority</p>
                 </div>
               </div>
+              {business.delivery && <div className="flex items-start gap-3">
+                <div className="p-2 bg-amber-50 text-amber-700 rounded-lg shrink-0"><Truck className="w-4 h-4" /></div>
+                <div>
+                  <p className="font-bold text-gray-800">Delivery Available</p>
+                  <p className="text-gray-500 text-[11px]">This business offers delivery</p>
+                </div>
+              </div>}
             </div>
           </div>
 
@@ -443,12 +446,13 @@ export default function UserBusinessProfile() {
             <div className="text-2xl mb-2">👑</div>
             <h3 className="text-lg font-serif font-bold text-[#DBA55C]">Are you a Business Owner?</h3>
             <p className="text-gray-300 text-xs mt-2 mb-5">List your business and reach thousands of potential customers.</p>
-            <Link
-              to="/list-business"
+            <button
+              type="button"
+              onClick={() => setIsBusinessFormOpen(true)}
               className="inline-block bg-linear-to-r from-[#DBA55C] to-[#c8934d] hover:from-[#c8934d] hover:to-[#b6823d] text-gray-900 font-bold text-xs uppercase tracking-wider py-3 px-6 rounded-xl shadow transition"
             >
               List Your Business →
-            </Link>
+            </button>
           </div>
 
 
@@ -470,11 +474,14 @@ export default function UserBusinessProfile() {
 
 
               <button
-                onClick={() => window.open(`https://api.whatsapp.com/send?text=${window.location.href}`)}
+                onClick={() => {
+                  const shareText = `${business.businessName} in ${business.location}\nDiscover this business on KumariHUB:\n${window.location.href}`;
+                  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank', 'noopener,noreferrer');
+                }}
                 className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-700 transition cursor-pointer shadow-sm"
                 title="Share on WhatsApp"
               >
-                <MessageCircle className="w-4 h-4" />
+                <img src={whatsappIcon} className="w-6 h-6" alt="" />
               </button>
 
 
@@ -521,6 +528,7 @@ export default function UserBusinessProfile() {
         </div>
 
       </div>
+      <ListYourBusinessButton open={isBusinessFormOpen} onOpenChange={setIsBusinessFormOpen} showTrigger={false} />
     </div>
   );
 }
