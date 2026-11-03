@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
 import { business } from "../constant/product.js"
+import { adminFetch, setAdminToken } from '../utils/adminFetch';
 
 const AdminContext = createContext();
 
@@ -7,10 +8,12 @@ export const AdminProvider = ({ children }) => {
   const [businesses, setBusinesses] = useState([]);
 
   const API_URL = import.meta.env.VITE_API_URL;
-  const [adminToken, setAdminToken] = useState(() => localStorage.getItem('admin_api_token') || '');
+  const [adminToken, setAdminTokenState] = useState(() => {
+    localStorage.removeItem('admin_api_token');
+    return '';
+  });
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
-  const adminFetch = (url, options = {}) => fetch(url, { ...options, headers: { ...options.headers, Authorization: `Bearer ${adminToken}` } });
 
   const [category, setCategory] = useState(() => {
     const saved = localStorage.getItem('admin_categories');
@@ -94,8 +97,8 @@ export const AdminProvider = ({ children }) => {
         setLoginError(data.error || 'Admin login failed.');
         return;
       }
-      localStorage.setItem('admin_api_token', data.token);
       setAdminToken(data.token);
+      setAdminTokenState(data.token);
       setPasswordInput('');
     } catch {
       setLoginError('Could not connect to the server. Please try again.');
