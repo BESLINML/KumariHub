@@ -19,7 +19,7 @@ const verifyRazorpayPayment = async (req, res, next) => {
     const payment = await razorpay.payments.fetch(paymentId);
     const amountRupees = req.body.durationDays
       ? ({ 15: 299, 30: 499 }[Number(req.body.durationDays)] || 0)
-      : 199;
+      : 1;
     if (payment.order_id !== orderId || payment.status !== 'captured' || payment.amount !== amountRupees * 100 || payment.currency !== 'INR') {
       return res.status(400).json({ error: 'Payment does not match the selected purchase.' });
     }

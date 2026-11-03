@@ -145,7 +145,7 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
       })
     };
 
-    // 1. Trigger Razorpay Payment First (₹199)
+    // 1. Trigger Razorpay Payment First (₹1)
     if (isAdvertisement) {
       try {
         const params = new URLSearchParams({ businessName: formData.businessName.trim(), phone: formData.phone.trim() });
@@ -298,7 +298,7 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-gray-600">Phone Number *</label>
-                      <input type="tel" name="phone" required value={formData.phone} onChange={handleChange} placeholder="Enter phone number" className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
+                      <input type="tel" name="phone" required value={formData.phone} onChange={handleChange} placeholder="9876543210" inputMode="numeric" pattern="[6-9][0-9]{9}" maxLength={10} title="Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9." className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-gray-600">Category *</label>
@@ -374,13 +374,13 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
 
                   <div>
                     <label className="text-xs font-semibold text-gray-600">Phone Number *</label>
-                    <input type="number" name="phone" required value={formData.phone} onChange={handleChange} placeholder="9876543210" className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
+                    <input type="tel" name="phone" required value={formData.phone} onChange={handleChange} placeholder="9876543210" inputMode="numeric" pattern="[6-9][0-9]{9}" maxLength={10} title="Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9." className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
                   </div>
 
 
                   <div>
                     <label className="text-xs font-semibold text-gray-600">WhatsApp Number</label>
-                    <input type="number" name="whatsapp" value={formData.whatsapp} onChange={handleChange} placeholder="9876543210" className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
+                    <input type="tel" name="whatsapp" value={formData.whatsapp} onChange={handleChange} placeholder="9876543210" inputMode="numeric" pattern="([6-9][0-9]{9})?" maxLength={10} title="Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9." className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
                   </div>
 
 

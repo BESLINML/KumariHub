@@ -15,7 +15,7 @@ export const handlePayment = async (API_URL, businessData, onSuccess, plan = nul
       amount: order.amount,
       currency: order.currency,
       name: "KumariHUB",
-      description: "Business Listing Fee - ₹199 (Inclusive of all taxes)",
+      description: "Business Listing Fee - ₹1 (Inclusive of all taxes)",
       order_id: order.id,
       ...(plan && { description: `Business Advertisement - ${plan.days} days - INR ${plan.amount}` }),
 

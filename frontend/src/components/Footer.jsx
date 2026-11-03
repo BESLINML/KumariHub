@@ -16,7 +16,7 @@ const Footer = () => {
               <li><a href="#" className="hover:text-[#DBA55C] hover:ps-1 transition-all duration-300">About Kumari HUB</a></li>
               <li><a href="#" className="hover:text-[#DBA55C] hover:ps-1 transition-all duration-300">Contact Us</a></li>
               <li><a href="#" className="hover:text-[#DBA55C] hover:ps-1 transition-all duration-300">Advertise with us</a></li>
-              <li><a href="#" className="text-[#DBA55C] font-medium hover:underline">List Your Business – ₹199/year</a></li>
+              <li><a href="#" className="text-[#DBA55C] font-medium hover:underline">List Your Business – ₹1/year</a></li>
             </ul>
           </div>
 

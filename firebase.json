@@ -1,3 +1,4 @@
+
 {
   "hosting": {
     "public": "frontend/dist",
@@ -9,14 +10,8 @@
     "rewrites": [
       {
         "source": "**",
-        "function": {
-          "functionId": "shareMetadata",
-          "region": "asia-south1"
-        }
+        "destination": "/index.html"
       }
     ]
-  },
-  "functions": {
-    "source": "functions"
   }
 }

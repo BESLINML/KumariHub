@@ -11,7 +11,7 @@ const createOrder = async (req, res) => {
     const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
     const planPrices = { 15: 299, 30: 499 };
     const durationDays = Number(req.body?.durationDays);
-    const amountRupees = durationDays ? planPrices[durationDays] : 199;
+    const amountRupees = durationDays ? planPrices[durationDays] : 1;
     if (!amountRupees) {
       return res.status(400).json({ error: 'Choose a valid plan: 15 days or 30 days.' });
     }
