@@ -3,6 +3,7 @@ const router = express.Router();
 const { pool } = require('../db');
 const { camelize, normalizePhone } = require('../utils/records');
 const verifyRazorpayPayment = require('../utils/verifyRazorpayPayment');
+const { saveAdvertisementFromOrder } = require('../utils/paidSubmissionRecovery');
 const authenticateAdmin = require('../utils/adminAuth');
 
 const findRegisteredBusiness = async (businessName, phone) => {
@@ -44,6 +45,7 @@ router.get('/', (req,res,next)=>req.query.all==='true'?authenticateAdmin(req,res
   }
 });
 
+const verifyAdvertisementPayment = (req, res, next) => { req.paymentPurpose = 'advertisement'; return verifyRazorpayPayment(req, res, next); };
 router.post('/', async (req, res, next) => {
   try {
     const { companyName, phone } = req.body || {};
@@ -54,26 +56,13 @@ router.post('/', async (req, res, next) => {
   } catch (error) {
     return res.status(500).json({ error: 'Could not verify the business listing.' });
   }
-}, verifyRazorpayPayment, async (req, res) => {
+}, verifyAdvertisementPayment, async (req, res) => {
   try {
-    const { companyName, place, phone, category, coverPhoto, description, durationDays, amount } = req.body;
-    const paymentId = req.verifiedPaymentId;
-    const days = Number(durationDays);
-    const price = days === 15 ? 299 : days === 30 ? 499 : 0;
-    if (!companyName || !place || !phone || !category || !coverPhoto || !description || !paymentId || !price || Number(amount) !== price) {
-      return res.status(400).json({ error: 'Advertisement details or selected plan are invalid.' });
-    }
-
-    const result = await pool.query(
-      `INSERT INTO advertisements
-        ("companyName", place, phone, category, "coverPhoto", description, "durationDays", amount, "paymentId", "expiresAt")
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW() + ($7::integer * INTERVAL '1 day'))
-       RETURNING *`,
-      [companyName.trim(), place.trim(), normalizePhone(phone), category.trim(), coverPhoto, description.trim(), days, price, paymentId],
-    );
-    res.status(201).json(camelize(result.rows[0]));
+    const row = await saveAdvertisementFromOrder(req.verifiedAdvertisementOrder, req.verifiedPaymentId);
+    res.status(201).json(row);
   } catch (error) {
-    res.status(500).json({ error: 'Could not save advertisement.' });
+    console.error('Could not save paid advertisement:', error.message);
+    res.status(500).json({ error: 'Payment was received, but the advertisement could not be saved yet. It will be retried automatically.' });
   }
 });
 

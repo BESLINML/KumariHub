@@ -1,4 +1,4 @@
-import { BarChart3, Building2, DiamondPlus, FolderPlus, LayoutDashboard, MapPin, MapPinPlus, Megaphone, PlusCircle, Shapes, Wallet } from 'lucide-react';
+import { BarChart3, Building2, DiamondPlus, FolderPlus, LayoutDashboard, MapPin, MapPinPlus, Megaphone, PlusCircle, ReceiptText, Shapes, Wallet } from 'lucide-react';
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 
@@ -92,6 +92,14 @@ const AdminSlideBar = ({ setModalType, setIsModalOpen }) => {
           >
             <MapPin className="w-4 h-4 text-[#D4AF37] shrink-0" />
             <span>Top Locations</span>
+          </button>
+
+          <button
+            onClick={() => { navigate("/admin-dashBoard/billing-settings"); setActiveTab("billing"); }}
+            className={`flex items-center gap-2 md:gap-3.5 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 ${activeTab === 'billing' ? "bg-white/10 text-white shadow-xs" : "hover:bg-white/5 hover:text-white"}`}
+          >
+            <ReceiptText className="w-4 h-4 text-[#D4AF37] shrink-0" />
+            <span>Billing & Invoice</span>
           </button>
 
         </nav>

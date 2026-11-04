@@ -415,13 +415,6 @@ export default function UserBusinessProfile() {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-amber-50 text-amber-700 rounded-lg shrink-0"><Clock className="w-4 h-4" /></div>
-                <div>
-                  <p className="font-bold text-gray-800">On-time Delivery</p>
-                  <p className="text-gray-500 text-[11px]">Committed to delivering on time</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
                 <div className="p-2 bg-amber-50 text-amber-700 rounded-lg shrink-0"><ThumbsUp className="w-4 h-4" /></div>
                 <div>
                   <p className="font-bold text-gray-800">100% Customer Satisfaction</p>
@@ -431,7 +424,7 @@ export default function UserBusinessProfile() {
               {business.delivery && <div className="flex items-start gap-3">
                 <div className="p-2 bg-amber-50 text-amber-700 rounded-lg shrink-0"><Truck className="w-4 h-4" /></div>
                 <div>
-                  <p className="font-bold text-gray-800">Delivery Available</p>
+                  <p className="font-bold text-gray-800">On-time Delivery</p>
                   <p className="text-gray-500 text-[11px]">This business offers delivery</p>
                 </div>
               </div>}

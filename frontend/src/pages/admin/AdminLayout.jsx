@@ -13,7 +13,8 @@ const AdminLayout = () => {
     businesses,
     fetchAdminData,
     loading,
-    loadPercentage
+    loadPercentage,
+    adminError
   } = useAdmin();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -265,14 +266,14 @@ const AdminLayout = () => {
         </div>
 
 
-        <main className="md:w-[70%] xl:w-[80%]">
+        <main className="min-w-0 min-h-0 flex-1 overflow-y-auto md:w-[70%] xl:w-[80%]">
           {loading?(
             <div className="flex justify-center items-center py-10 gap-3 sm:gap-5 h-screen">
             <div className="w-8 h-8 border-4 border-[#1A2E26]/20 border-t-[#D4AF37] rounded-full animate-spin"></div>
             <p className="font-bold text-sm text-[#D4AF37]">Loading...{loadPercentage}%</p>
           </div>
           ):
-            <Outlet />
+            adminError ? <p role="alert" className="m-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{adminError}</p> : <Outlet />
           }
 
         </main>

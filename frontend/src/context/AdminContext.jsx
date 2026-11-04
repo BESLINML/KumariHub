@@ -26,6 +26,7 @@ export const AdminProvider = ({ children }) => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [adminError, setAdminError] = useState('');
   const [loadPercentage, setLoadPercentage] = useState(0);
 
   const hasFetched = useRef(false);
@@ -36,39 +37,44 @@ export const AdminProvider = ({ children }) => {
 
     try {
       setLoading(true);
+      setAdminError('');
       setLoadPercentage(10);
 
 
       const res = await adminFetch(`${API_URL}/api/businesses?all=true&limit=1000`);
       setLoadPercentage(30)
       const data = await res.json();
-      setLoadPercentage(40);
-      if (res.ok) {
-        setBusinesses(data.businesses);
+      if (!res.ok) {
+        if (res.status === 401) {
+          setAdminToken('');
+          setAdminTokenState('');
+        }
+        throw new Error(data.error || 'Could not load admin business data.');
       }
+      setLoadPercentage(40);
+      setBusinesses(Array.isArray(data.businesses) ? data.businesses : []);
       setLoadPercentage(60);
 
 
       const catRes = await fetch(`${API_URL}/api/categories`);
       const catData = await catRes.json();
-      if (catRes.ok) {
-        setCategory(catData);
-        localStorage.setItem('admin_categories', JSON.stringify(catData));
-      }
+      if (!catRes.ok) throw new Error(catData.error || 'Could not load business categories.');
+      setCategory(catData);
+      localStorage.setItem('admin_categories', JSON.stringify(catData));
       setLoadPercentage(80);
 
 
       const locRes = await fetch(`${API_URL}/api/locations`);
       const locData = await locRes.json();
-      if (locRes.ok) {
-        setLocationsList(locData);
-        localStorage.setItem('admin_locations', JSON.stringify(locData));
-      }
+      if (!locRes.ok) throw new Error(locData.error || 'Could not load business locations.');
+      setLocationsList(locData);
+      localStorage.setItem('admin_locations', JSON.stringify(locData));
       setLoadPercentage(100);
 
       hasFetched.current = true;
     } catch (error) {
       console.error("Error fetching admin data:", error);
+      setAdminError(error.message || 'Could not load the admin dashboard.');
     } finally {
       setLoading(false);
     }
@@ -122,7 +128,7 @@ export const AdminProvider = ({ children }) => {
       category, setCategory,
       locationsList, setLocationsList,
       loading, fetchAdminData, refreshData: refreshAdminData,
-      loadPercentage, adminFetch
+      loadPercentage, adminFetch, adminError
     }}>
       {children}
     </AdminContext.Provider>

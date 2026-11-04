@@ -69,3 +69,7 @@ functions/.env.*
 
 # dataconnect generated files
 .dataconnect
+
+# Temporary development folders
+.tmp-frontend-test/
+frontend/node_modules_backup/

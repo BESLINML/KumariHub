@@ -57,6 +57,7 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
 
   const [formData, setFormData] = useState({
     ownerName: '',
+    email: '',
     businessName: '',
     category: '',
     customCategory: '',
@@ -121,6 +122,7 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
 
     const businessBasicData = {
       ownerName: formData.ownerName || formData.businessName,
+      email: formData.email.trim(),
       businessName: formData.businessName,
       category: finalCategory,
       location: finalLocation,
@@ -167,7 +169,21 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
       }
     }
 
-    handlePayment(API_URL, { businessName: formData.businessName, phone: formData.phone }, async (paymentResponse) => {
+    handlePayment(API_URL, {
+      businessName: formData.businessName,
+      ownerName: formData.ownerName || formData.businessName,
+      email: formData.email.trim(),
+      phone: formData.phone,
+      businessDetails: isAdvertisement ? undefined : businessBasicData,
+      advertisementDetails: isAdvertisement ? {
+        companyName: formData.businessName,
+        place: finalLocation,
+        phone: formData.phone,
+        category: finalCategory,
+        coverPhoto: formData.img,
+        description: formData.aboutBusness,
+      } : undefined,
+    }, async (paymentResponse) => {
       try {
         const submission = isAdvertisement
           ? {
@@ -204,11 +220,12 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
           if (isAdvertisement) {
             window.dispatchEvent(new CustomEvent('kumarihub:advertisement-created', { detail: data }));
           }
-          setNotifyConfig({isPopUpOpen:true, title:"Payment Successful", dis:isAdvertisement ? "Payment successful! Your advertisement is now live." : "Payment successful & Business submitted for Admin approval!", type:"success"})
+          const receiptMessage = data.receiptEmailSent ? ' Receipt sent to your email.' : ' Receipt email could not be sent.';
+          setNotifyConfig({isPopUpOpen:true, title:"Payment Successful", dis:isAdvertisement ? "Payment successful! Your advertisement is now live." : `Your business details are saved and will appear publicly after admin approval.${receiptMessage}`, type:"success"})
           // alert("Payment successful & Business submitted for Admin approval!");
           // setIsOpen(false);
           setFormData({
-            ownerName: '', businessName: '', category: '', customCategory: '', location: '', customLocation: '',
+            ownerName: '', email: '', businessName: '', category: '', customCategory: '', location: '', customLocation: '',
             address: '', aboutBusness: '', phone: '', whatsapp: '', locationLink: '', services: '', delivery: false, img: '',
             timing: formData.timing
           });
@@ -222,7 +239,15 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
         // alert("Failed to connect to backend server after payment!");
       }
       setIsSubmiting(false);
-    }, isAdvertisement ? selectedPlan : null);
+    }, isAdvertisement ? selectedPlan : null, ({ message, emailSent }) => {
+      setIsSubmiting(false);
+      setNotifyConfig({
+        isPopUpOpen: true,
+        title: 'Payment Failed',
+        dis: `${message}${emailSent ? ' A payment failure notice was sent to your email.' : ' We could not send a failure email.'}`,
+        type: 'error',
+      });
+    });
   };
 
   const handleFormCancel = () => {
@@ -328,6 +353,11 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
                   <div>
                     <label className="text-xs font-semibold text-gray-600">Owner Name *</label>
                     <input type="text" name="ownerName" required value={formData.ownerName} onChange={handleChange} placeholder="e.g. John Doe" className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600">Email for payment bill *</label>
+                    <input type="email" name="email" required value={formData.email} onChange={handleChange} placeholder="you@example.com" autoComplete="email" className="w-full mt-1.5 border border-gray-300 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#DBA55C]" />
                   </div>
 
 

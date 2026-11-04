@@ -6,8 +6,10 @@ dotenv.config();
 
 const { pool, initializeDatabase } = require('./db');
 const app = express();
-app.use(express.json({ limit: '10mb' }));
 app.use(cors());
+const paymentController = require('./utils/paymentController');
+app.post('/api/razorpay-webhook', express.raw({ type: 'application/json' }), paymentController.handleRazorpayWebhook);
+app.use(express.json({ limit: '10mb' }));
 
 app.use('/api/businesses', require('./routes/businessRoutes'));
 app.use('/api/advertisements', require('./routes/advertisementRoutes'));
@@ -15,7 +17,8 @@ app.use('/api/locations', require('./routes/locationRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/admin', require('./routes/dashboardRoutes'));
-app.post('/api/create-order', require('./utils/paymentController').createOrder);
+app.post('/api/create-order', paymentController.createOrder);
+app.post('/api/payment-failed', paymentController.notifyPaymentFailure);
 app.get('/', (_req, res) => res.send('KumariHub Backend Server is running smoothly!'));
 
 const cleanExpiredRecords = async () => {

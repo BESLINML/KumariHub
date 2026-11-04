@@ -13,6 +13,7 @@ import RecentBusinesses from './pages/admin/RecentBusinesses'
 import PremiumList from './pages/admin/PremiumList'
 import Renewal from './pages/admin/Renewal'
 import Other from './pages/admin/Other'
+import BillingSettings from './pages/admin/BillingSettings'
 import CategoryPage from './pages/CategoryPage'
 import CategoryLocationPage from './pages/CategoryLocationPage'
 
@@ -41,6 +42,7 @@ const App = () => {
             <Route path="/admin-dashBoard/advertisement-list" element={<PremiumList />} />
             <Route path="/admin-dashBoard/renewal-list" element={<Renewal />} />
             <Route path="/admin-dashBoard/other" element={<Other />} />
+            <Route path="/admin-dashBoard/billing-settings" element={<BillingSettings />} />
 
           </Route>
 
