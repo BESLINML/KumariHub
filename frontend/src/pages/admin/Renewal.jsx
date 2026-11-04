@@ -67,7 +67,7 @@ const Renewal = () => {
           currentList.map((item) => (
             <BusinessProfileCard
               key={item._id}
-              buttonOnClick={() => window.open(`/admin-dashBoard/business/${item._id}`, '_blank')}
+              buttonOnClick={() => window.open(`/admin-dashboard/business/${item._id}`, '_blank')}
               businessIMG={item.img}
               businessName={item.businessName}
               businessStatus={item.status}

@@ -15,7 +15,7 @@ const verifyRazorpayPayment = async (req, res, next) => {
 
   try {
     const expected = crypto.createHmac('sha256', keySecret).update(`${orderId}|${paymentId}`).digest();
-    if (!/^[0-9a-f]{128}$/i.test(String(signature))) return res.status(400).json({ error: 'Payment signature is invalid.' });
+    if (!/^[0-9a-f]{64}$/i.test(String(signature))) return res.status(400).json({ error: 'Payment signature is invalid.' });
     const received = Buffer.from(signature, 'hex');
     if (expected.length !== received.length || !crypto.timingSafeEqual(expected, received)) {
       return res.status(400).json({ error: 'Payment signature is invalid.' });

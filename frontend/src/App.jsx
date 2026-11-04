@@ -29,25 +29,24 @@ const App = () => {
             <Route path="/:category/:location/:businessName" element={<UserBusinessProfile />} />
 
           </Route>
+<Route path="/admin-dashboard" element={
+  <AdminProvider>
+    <AdminLayout />
+  </AdminProvider>
+}>
+  <Route index element={<Dashboard />} />
+  <Route path="inactive-list" element={<InactiveList />} />
+  <Route path="pending-submission" element={<PendingSubmissions />} />
+  <Route path="recent-businesses" element={<RecentBusinesses />} />
+  <Route path="advertisement-list" element={<PremiumList />} />
+  <Route path="renewal-list" element={<Renewal />} />
+  <Route path="other" element={<Other />} />
+  <Route path="billing-settings" element={<BillingSettings />} />
+  <Route path="business/:id" element={<AdminBusinessProfile />} />
+</Route>
 
-          <Route path="/admin-dashBoard" element={
-            <AdminProvider>
-              <AdminLayout />
-            </AdminProvider>
-          }>
-            <Route index element={<Dashboard />} />
-            <Route path="/admin-dashBoard/inactive-list" element={<InactiveList />} />
-            <Route path="/admin-dashBoard/pending-submission" element={<PendingSubmissions />} />
-            <Route path="/admin-dashBoard/recent-businesses" element={<RecentBusinesses />} />
-            <Route path="/admin-dashBoard/advertisement-list" element={<PremiumList />} />
-            <Route path="/admin-dashBoard/renewal-list" element={<Renewal />} />
-            <Route path="/admin-dashBoard/other" element={<Other />} />
-            <Route path="/admin-dashBoard/billing-settings" element={<BillingSettings />} />
 
-          </Route>
-
-
-          <Route path="/admin-dashBoard/business/:id" element={
+          <Route path="/admin-dashboard/business/:id" element={
             <AdminProvider>
               <AdminBusinessProfile />
             </AdminProvider>

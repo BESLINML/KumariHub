@@ -23,7 +23,7 @@ const AdminSlideBar = ({ setModalType, setIsModalOpen }) => {
         <nav className="flex md:flex-col gap-2 overflow-x-scroll md:overflow-x-visible pb-2 md:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none">
 
           <button
-            onClick={() => { navigate("/admin-dashBoard"), setActiveTab("dashboard") }}
+            onClick={() => { navigate("/admin-dashboard"), setActiveTab("dashboard") }}
             className={`flex items-center gap-2 md:gap-3.5 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 ${activeTab === 'dashboard' ? "bg-white/10 text-white shadow-xs" : "hover:bg-white/5 hover:text-white"
               }`}
           >
@@ -32,7 +32,7 @@ const AdminSlideBar = ({ setModalType, setIsModalOpen }) => {
           </button>
 
           <button
-            onClick={() => { navigate("/admin-dashBoard/inactive-list"), setActiveTab("inactive") }}
+            onClick={() => { navigate("/admin-dashboard/inactive-list"), setActiveTab("inactive") }}
             className={`flex items-center gap-2 md:gap-3.5 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 ${activeTab === 'inactive' ? "bg-white/10 text-white shadow-xs" : "hover:bg-white/5 hover:text-white"
               }`}
           >
@@ -41,7 +41,7 @@ const AdminSlideBar = ({ setModalType, setIsModalOpen }) => {
           </button>
 
           <button
-            onClick={() => { navigate("/admin-dashBoard/pending-submission"), setActiveTab("pending") }}
+            onClick={() => { navigate("/admin-dashboard/pending-submission"), setActiveTab("pending") }}
             className={`flex items-center gap-2 md:gap-3.5 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 ${activeTab === 'pending' ? "bg-white/10 text-white shadow-xs" : "hover:bg-white/5 hover:text-white"
               }`}
           >
@@ -50,7 +50,7 @@ const AdminSlideBar = ({ setModalType, setIsModalOpen }) => {
           </button>
 
           <button
-            onClick={() => { navigate("/admin-dashBoard/recent-businesses"), setActiveTab("recent") }}
+            onClick={() => { navigate("/admin-dashboard/recent-businesses"), setActiveTab("recent") }}
             className={`flex items-center gap-2 md:gap-3.5 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 ${activeTab === 'recent' ? "bg-white/10 text-white shadow-xs" : "hover:bg-white/5 hover:text-white"
               }`}
           >
@@ -59,7 +59,7 @@ const AdminSlideBar = ({ setModalType, setIsModalOpen }) => {
           </button>
 
           <button
-            onClick={() => { navigate("/admin-dashBoard/advertisement-list"); setActiveTab("advertisements"); }}
+            onClick={() => { navigate("/admin-dashboard/advertisement-list"); setActiveTab("advertisements"); }}
             className={`flex items-center gap-2 md:gap-3.5 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 ${activeTab === 'advertisements' ? "bg-white/10 text-white shadow-xs" : "hover:bg-white/5 hover:text-white"
               }`}
           >
@@ -68,7 +68,7 @@ const AdminSlideBar = ({ setModalType, setIsModalOpen }) => {
           </button>
 
           <button
-            onClick={() => { navigate("/admin-dashBoard/renewal-list"), setActiveTab("renewal") }}
+            onClick={() => { navigate("/admin-dashboard/renewal-list"), setActiveTab("renewal") }}
             className={`flex items-center gap-2 md:gap-3.5 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 ${activeTab === 'renewal' ? "bg-white/10 text-white shadow-xs" : "hover:bg-white/5 hover:text-white"
               }`}
           >
@@ -77,7 +77,7 @@ const AdminSlideBar = ({ setModalType, setIsModalOpen }) => {
           </button>
 
           <button
-            onClick={() => { navigate("/admin-dashBoard/other?view=categories"); setActiveTab("categories"); }}
+            onClick={() => { navigate("/admin-dashboard/other?view=categories"); setActiveTab("categories"); }}
             className={`flex items-center gap-2 md:gap-3.5 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 ${activeTab === 'categories' ? "bg-white/10 text-white shadow-xs" : "hover:bg-white/5 hover:text-white"
               }`}
           >
@@ -86,7 +86,7 @@ const AdminSlideBar = ({ setModalType, setIsModalOpen }) => {
           </button>
 
           <button
-            onClick={() => { navigate("/admin-dashBoard/other?view=locations"); setActiveTab("locations"); }}
+            onClick={() => { navigate("/admin-dashboard/other?view=locations"); setActiveTab("locations"); }}
             className={`flex items-center gap-2 md:gap-3.5 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 ${activeTab === 'locations' ? "bg-white/10 text-white shadow-xs" : "hover:bg-white/5 hover:text-white"
               }`}
           >
@@ -95,7 +95,7 @@ const AdminSlideBar = ({ setModalType, setIsModalOpen }) => {
           </button>
 
           <button
-            onClick={() => { navigate("/admin-dashBoard/billing-settings"); setActiveTab("billing"); }}
+            onClick={() => { navigate("/admin-dashboard/billing-settings"); setActiveTab("billing"); }}
             className={`flex items-center gap-2 md:gap-3.5 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 ${activeTab === 'billing' ? "bg-white/10 text-white shadow-xs" : "hover:bg-white/5 hover:text-white"}`}
           >
             <ReceiptText className="w-4 h-4 text-[#D4AF37] shrink-0" />

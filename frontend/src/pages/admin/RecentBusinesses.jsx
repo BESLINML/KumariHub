@@ -24,7 +24,7 @@ const RecentBusinesses = () => {
                 category={b.category}
                 businessIMG={b.img}
                 businessStatus={b.status}
-                buttonOnClick={() => window.open(`/admin-dashBoard/business/${b._id}`, '_blank')}
+                buttonOnClick={() => window.open(`/admin-dashboard/business/${b._id}`, '_blank')}
               />
             ))
           ) : (

@@ -301,11 +301,11 @@ const Dashboard = () => {
             <div
               key={business._id}
               className="w-full cursor-pointer rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
-              onClick={() => navigate(`/admin-dashBoard/business/${business._id}`)}
+              onClick={() => navigate(`/admin-dashboard/business/${business._id}`)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
-                  navigate(`/admin-dashBoard/business/${business._id}`);
+                  navigate(`/admin-dashboard/business/${business._id}`);
                 }
               }}
               role="button"
