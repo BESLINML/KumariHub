@@ -8,7 +8,7 @@ const businessFields = ['ownerName','businessName','category','address','locatio
 const slug = (value='') => decodeURIComponent(value).replace(/[-_]/g, ' ').trim();
 const pattern = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '[\\s-]+');
 const findBusiness = async (category, location, name) => {
-  const result = await pool.query('SELECT * FROM businesses WHERE category ~* $1 AND location ~* $2 AND "businessName" ~* $3 LIMIT 1', [`^${pattern(category)}$`, `^${pattern(location)}$`, `^${pattern(name)}$`]);
+  const result = await pool.query('SELECT * FROM businesses WHERE BTRIM(category) ~* $1 AND BTRIM(location) ~* $2 AND BTRIM("businessName") ~* $3 LIMIT 1', [`^${pattern(category)}$`, `^${pattern(location)}$`, `^${pattern(name)}$`]);
   return camelize(result.rows[0]);
 };
 const reviewsFor = async (id) => (await pool.query('SELECT id, "userName", rating, comment, "createdAt" FROM reviews WHERE "businessId"=$1 ORDER BY "createdAt" DESC', [id])).rows.map(camelize);

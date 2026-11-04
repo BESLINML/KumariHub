@@ -27,9 +27,8 @@ export default function UserBusinessProfile() {
   const fetchBusinessDetails = async () => {
     try {
       setLoading(true);
-      const res = await fetch(
-        `${API_URL}/api/businesses/slug?category=${category}&location=${location}&name=${businessName}`
-      );
+      const params = new URLSearchParams({ category, location, name: businessName });
+      const res = await fetch(`${API_URL}/api/businesses/slug?${params}`);
       const data = await res.json();
 
       if (res.ok) {
