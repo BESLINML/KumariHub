@@ -145,7 +145,6 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
       })
     };
 
-    // 1. Trigger Razorpay Payment First (₹1)
     if (isAdvertisement) {
       try {
         const params = new URLSearchParams({ businessName: formData.businessName.trim(), phone: formData.phone.trim() });
@@ -464,7 +463,7 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
           </div>
           <NotificationBar
         isOpen={notifyConfig.isPopUpOpen}
-        title={notifyConfig.type}
+        title={notifyConfig.title}
         message={notifyConfig.dis}
         type={notifyConfig.type}
         onClose={() => {
