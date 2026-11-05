@@ -20,7 +20,7 @@ const wrapText = (value, maxLength = 78) => {
   return lines;
 };
 
-function createInvoicePdf({ sellerName, sellerGstin, issueDate, ownerName, email, businessName, businessDetails = {}, paymentId, baseAmount, gstRate = 0, taxAmount = 0, totalAmount, message }) {
+function createInvoicePdf({ sellerName, sellerGstin, issueDate, ownerName, email, businessName, businessDetails = {}, purchaseDescription = 'Business listing fee', paymentId, baseAmount, gstRate = 0, taxAmount = 0, totalAmount, message }) {
   const pages = [[]];
   let commands = pages[0];
   let page = 1;
@@ -95,7 +95,7 @@ function createInvoicePdf({ sellerName, sellerGstin, issueDate, ownerName, email
     line(42, y + 31, 553, y + 31);
     y += 34;
   };
-  amountRow('Business listing fee', baseAmount);
+  amountRow(purchaseDescription, baseAmount);
   if (Number(gstRate) > 0) {
     amountRow(`CGST (${(Number(gstRate) / 2).toFixed(2)}%)`, Number(taxAmount) / 2);
     amountRow(`SGST (${(Number(gstRate) / 2).toFixed(2)}%)`, Number(taxAmount) / 2);

@@ -35,8 +35,11 @@ async function initializeDatabase() {
     CREATE TABLE IF NOT EXISTS advertisement_orders (
       "orderId" TEXT PRIMARY KEY, "expectedAmountPaise" INTEGER NOT NULL,
       "durationDays" INTEGER NOT NULL CHECK ("durationDays" IN (15, 30)),
-      details JSONB NOT NULL, "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      details JSONB NOT NULL, "baseAmountPaise" INTEGER, settings JSONB,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+    ALTER TABLE advertisement_orders ADD COLUMN IF NOT EXISTS "baseAmountPaise" INTEGER;
+    ALTER TABLE advertisement_orders ADD COLUMN IF NOT EXISTS settings JSONB;
     CREATE TABLE IF NOT EXISTS payment_notifications (
       "paymentId" TEXT PRIMARY KEY, type TEXT NOT NULL, "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
@@ -63,13 +66,15 @@ async function initializeDatabase() {
       "coverPhoto" TEXT NOT NULL,
       description TEXT NOT NULL,
       "durationDays" INTEGER NOT NULL CHECK ("durationDays" IN (15, 30)),
-      amount INTEGER NOT NULL CHECK (amount IN (299, 499)),
+      amount NUMERIC(12,2) NOT NULL,
       "paymentId" TEXT NOT NULL,
       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       "expiresAt" TIMESTAMPTZ NOT NULL
     );
     CREATE INDEX IF NOT EXISTS advertisements_active_idx ON advertisements ("expiresAt", "createdAt" DESC);
     CREATE UNIQUE INDEX IF NOT EXISTS advertisements_payment_id_unique_idx ON advertisements ("paymentId");
+    ALTER TABLE advertisements DROP CONSTRAINT IF EXISTS advertisements_amount_check;
+    ALTER TABLE advertisements ALTER COLUMN amount TYPE NUMERIC(12,2) USING amount::numeric;
   `);
   await pool.query(
     'INSERT INTO billing_settings (id, settings) VALUES (1, $1::jsonb) ON CONFLICT (id) DO NOTHING',

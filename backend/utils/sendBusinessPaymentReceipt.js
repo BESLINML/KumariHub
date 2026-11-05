@@ -5,7 +5,7 @@ const escapeHtml = (value = '') => String(value).replace(/[&<>"']/g, (character)
 const formatInr = (amount) => `INR ${Number(amount).toFixed(2)}`;
 const createInvoicePdf = require('./createInvoicePdf');
 
-async function sendBusinessPaymentReceipt({ email, ownerName, businessName, paymentId, amount, billingSettings, taxBreakdown, businessDetails }) {
+async function sendBusinessPaymentReceipt({ email, ownerName, businessName, paymentId, amount, billingSettings, taxBreakdown, businessDetails, purchaseDescription = 'Business listing fee', isAdvertisement = false }) {
   if (!process.env.BREVO_API_KEY || !process.env.MAIL_FROM_EMAIL) {
     console.warn('Payment receipt email skipped: BREVO_API_KEY or MAIL_FROM_EMAIL is not configured.');
     return false;
@@ -29,7 +29,7 @@ async function sendBusinessPaymentReceipt({ email, ownerName, businessName, paym
   const safeBusiness = escapeHtml(businessName);
   const invoicePdf = createInvoicePdf({
     sellerName, sellerGstin: gstin,
-    issueDate: date, ownerName, email, businessName, businessDetails, paymentId,
+    issueDate: date, ownerName, email, businessName, businessDetails, purchaseDescription, paymentId,
     baseAmount, gstRate: includesTax ? taxRate : 0,
     taxAmount: includesTax ? Number(taxBreakdown.taxPaise) / 100 : 0,
     totalAmount: total, message,
@@ -48,10 +48,10 @@ async function sendBusinessPaymentReceipt({ email, ownerName, businessName, paym
     .join('');
   const html = `<div style="font-family:Arial,sans-serif;color:#222;max-width:600px;margin:auto">
     <h2>${escapeHtml(sellerName)}</h2><h3>${documentTitle}</h3>
-    <p>Hello ${escapeHtml(ownerName || businessName)}, your payment was successful. Your business listing has been submitted for admin approval. A copy of your bill/invoice is attached as a PDF.</p>
+    <p>Hello ${escapeHtml(ownerName || businessName)}, your payment for ${escapeHtml(purchaseDescription)} was successful.${isAdvertisement ? ' Your advertisement has been added.' : ' Your business listing has been submitted for admin approval.'} A copy of your bill/invoice is attached as a PDF.</p>
     ${sellerRows}<table style="border-collapse:collapse;width:100%" cellpadding="8" border="1">
-      <tr><td>Business</td><td>${safeBusiness}</td></tr>${detailRows}<tr><td>Payment ID</td><td>${escapeHtml(paymentId)}</td></tr>
-      <tr><td>Date</td><td>${date}</td></tr><tr><td>Listing base amount</td><td>${formatInr(baseAmount)}</td></tr>${taxRows}<tr><td><strong>Total paid</strong></td><td><strong>${formatInr(total)}</strong></td></tr>
+      <tr><td>${isAdvertisement ? 'Company' : 'Business'}</td><td>${safeBusiness}</td></tr>${detailRows}<tr><td>Payment ID</td><td>${escapeHtml(paymentId)}</td></tr>
+      <tr><td>Date</td><td>${date}</td></tr><tr><td>${escapeHtml(purchaseDescription)}</td><td>${formatInr(baseAmount)}</td></tr>${taxRows}<tr><td><strong>Total paid</strong></td><td><strong>${formatInr(total)}</strong></td></tr>
     </table><p>${escapeHtml(message)}</p></div>`;
 
   const response = await fetch('https://api.brevo.com/v3/smtp/email', {

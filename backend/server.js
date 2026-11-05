@@ -18,6 +18,7 @@ app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/admin', require('./routes/dashboardRoutes'));
 app.post('/api/create-order', paymentController.createOrder);
+app.get('/api/pricing', paymentController.getPricing);
 app.post('/api/payment-failed', paymentController.notifyPaymentFailure);
 app.get('/', (_req, res) => res.send('KumariHub Backend Server is running smoothly!'));
 

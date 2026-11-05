@@ -58,8 +58,8 @@ router.post('/', async (req, res, next) => {
   }
 }, verifyAdvertisementPayment, async (req, res) => {
   try {
-    const row = await saveAdvertisementFromOrder(req.verifiedAdvertisementOrder, req.verifiedPaymentId);
-    res.status(201).json(row);
+    const result = await saveAdvertisementFromOrder(req.verifiedAdvertisementOrder, req.verifiedPaymentId);
+    res.status(201).json({ ...result.advertisement, receiptEmailSent: result.receiptEmailSent });
   } catch (error) {
     console.error('Could not save paid advertisement:', error.message);
     res.status(500).json({ error: 'Payment was received, but the advertisement could not be saved yet. It will be retried automatically.' });

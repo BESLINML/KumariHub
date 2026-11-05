@@ -9,7 +9,13 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
   const [categoriesList, setCategoriesList] = useState([]);
   const [locationsList, setLocationsList] = useState([]);
   const [issubmiting, setIsSubmiting] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState({ days: 15, amount: 299 });
+  const [advertisementPlans, setAdvertisementPlans] = useState([
+    { days: 15, baseAmount: 299, gstAmount: 0, totalAmount: 299 },
+    { days: 30, baseAmount: 499, gstAmount: 0, totalAmount: 499 },
+  ]);
+  const [selectedPlan, setSelectedPlan] = useState({ days: 15, amount: 299, totalAmount: 299 });
+  const [pricingReady, setPricingReady] = useState(false);
+  const [pricingError, setPricingError] = useState('');
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -28,7 +34,18 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
         if (locRes.ok) {
           setLocationsList(locData.map(loc => loc.locationName));
         }
+        if (isAdvertisement) {
+          setPricingReady(false);
+          setPricingError('');
+          const pricingResponse = await fetch(`${API_URL}/api/pricing`);
+          const pricing = await pricingResponse.json();
+          if (!pricingResponse.ok || !Array.isArray(pricing.advertisementPlans)) throw new Error(pricing.error || 'Could not load advertisement prices.');
+          setAdvertisementPlans(pricing.advertisementPlans);
+          setSelectedPlan((current) => pricing.advertisementPlans.find((plan) => plan.days === current.days) || pricing.advertisementPlans[0]);
+          setPricingReady(true);
+        }
       } catch (error) {
+        if (isAdvertisement) setPricingError('Could not load current advertisement prices. Please close and reopen this form to retry.');
         console.error("Error fetching dropdown data:", error);
       }
     };
@@ -177,6 +194,8 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
       businessDetails: isAdvertisement ? undefined : businessBasicData,
       advertisementDetails: isAdvertisement ? {
         companyName: formData.businessName,
+        ownerName: formData.ownerName || formData.businessName,
+        email: formData.email.trim(),
         place: finalLocation,
         phone: formData.phone,
         category: finalCategory,
@@ -220,8 +239,8 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
           if (isAdvertisement) {
             window.dispatchEvent(new CustomEvent('kumarihub:advertisement-created', { detail: data }));
           }
-          const receiptMessage = data.receiptEmailSent ? ' Receipt sent to your email.' : ' Receipt email could not be sent.';
-          setNotifyConfig({isPopUpOpen:true, title:"Payment Successful", dis:isAdvertisement ? "Payment successful! Your advertisement is now live." : `Your business details are saved and will appear publicly after admin approval.${receiptMessage}`, type:"success"})
+          const receiptMessage = data.receiptEmailSent ? ' Invoice emailed to you.' : ' Email receipt could not be sent; please contact KumariHub with your payment ID.';
+          setNotifyConfig({isPopUpOpen:true, title:"Payment Successful", dis:isAdvertisement ? `Your advertisement is active for ${selectedPlan.days} days.${receiptMessage}` : `Your business details are saved and will appear publicly after admin approval.${receiptMessage}`, type:"success"})
           // alert("Payment successful & Business submitted for Admin approval!");
           // setIsOpen(false);
           setFormData({
@@ -299,13 +318,15 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
                   <>
                   <fieldset>
                     <legend className="text-sm font-bold text-gray-700 mb-3">Choose an advertisement plan *</legend>
+                    {pricingError && <p role="alert" className="mb-3 text-sm text-red-600">{pricingError}</p>}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {[{ days: 15, amount: 299 }, { days: 30, amount: 499 }].map((plan) => (
+                      {advertisementPlans.map((plan) => (
                         <label key={plan.days} className={`flex items-center gap-3 rounded-2xl border-2 p-4 cursor-pointer transition-colors ${selectedPlan.days === plan.days ? 'border-[#DBA55C] bg-amber-50' : 'border-gray-200 hover:border-amber-300'}`}>
-                          <input type="radio" name="advertisementPlan" value={plan.days} checked={selectedPlan.days === plan.days} onChange={() => setSelectedPlan(plan)} className="accent-[#DBA55C]" />
+                          <input type="radio" name="advertisementPlan" value={plan.days} checked={selectedPlan.days === plan.days} onChange={() => setSelectedPlan({ ...plan, amount: plan.totalAmount })} className="accent-[#DBA55C]" />
                           <span className="flex flex-col">
                             <span className="font-bold text-[#1A2E26]">{plan.days} days</span>
-                            <span className="text-sm text-gray-600">₹{plan.amount}</span>
+                            <span className="text-sm text-gray-600">INR {Number(plan.totalAmount).toFixed(2)} total</span>
+                            {Number(plan.gstAmount) > 0 && <span className="text-xs text-gray-500">Price INR {Number(plan.baseAmount).toFixed(2)} + GST INR {Number(plan.gstAmount).toFixed(2)}</span>}
                           </span>
                         </label>
                       ))}
@@ -485,7 +506,7 @@ const ListYourBusinessButton = ({ navbar, buttonLabel = 'List Your Business', is
 
                 <div className="flex justify-end gap-4 pt-6 border-t border-gray-200 pb-10">
                   <button type="button" onClick={handleFormCancel} className="md:px-6 md:py-3 rounded-full text-sm font-semibold text-gray-600 hover:bg-gray-100 cursor-pointer">Cancel</button>
-                  <button type="submit" disabled={issubmiting} className={`text-[#1C1813] px-3 md:px-8 py-1 md:py-3 rounded-full text-sm font-semibold shadow-lg hover:opacity-90 ${issubmiting?"cursor-not-allowed bg-gray-500":"cursor-pointer bg-linear-to-r from-[#E6C594] to-[#DBA55C]"}`}>{issubmiting ? "Submitting" : isAdvertisement ? "Submit Advertisement" : "Submit Listing"}</button>
+                  <button type="submit" disabled={issubmiting || (isAdvertisement && !pricingReady)} className={`text-[#1C1813] px-3 md:px-8 py-1 md:py-3 rounded-full text-sm font-semibold shadow-lg hover:opacity-90 ${issubmiting || (isAdvertisement && !pricingReady)?"cursor-not-allowed bg-gray-500":"cursor-pointer bg-linear-to-r from-[#E6C594] to-[#DBA55C]"}`}>{issubmiting ? "Submitting" : isAdvertisement && !pricingReady ? "Loading prices" : isAdvertisement ? "Submit Advertisement" : "Submit Listing"}</button>
                 </div>
 
               </form>

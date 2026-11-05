@@ -1,5 +1,7 @@
 const DEFAULT_BILLING_SETTINGS = Object.freeze({
   baseAmount: 168,
+  advertisement15DayAmount: 299,
+  advertisement30DayAmount: 499,
   gstRate: 0,
   sellerName: 'KumariHub',
   sellerGstin: '',
@@ -21,6 +23,8 @@ async function loadBillingSettings(pool) {
 function validateBillingSettings(input) {
   const settings = {
     baseAmount: Number(input.baseAmount),
+    advertisement15DayAmount: Number(input.advertisement15DayAmount),
+    advertisement30DayAmount: Number(input.advertisement30DayAmount),
     gstRate: Number(input.gstRate),
     sellerName: String(input.sellerName || '').trim(),
     sellerGstin: String(input.sellerGstin || '').trim().toUpperCase(),
@@ -30,6 +34,11 @@ function validateBillingSettings(input) {
 
   if (!Number.isFinite(settings.baseAmount) || settings.baseAmount < 1 || settings.baseAmount > 1000000) {
     return { error: 'Base listing amount must be between ₹1 and ₹10,00,000.' };
+  }
+  for (const [field, label] of [['advertisement15DayAmount', '15-day advertisement price'], ['advertisement30DayAmount', '30-day advertisement price']]) {
+    if (!Number.isFinite(settings[field]) || settings[field] < 1 || settings[field] > 1000000) {
+      return { error: `${label} must be between INR 1 and INR 10,00,000.` };
+    }
   }
   if (!Number.isFinite(settings.gstRate) || settings.gstRate < 0 || settings.gstRate > 100) {
     return { error: 'GST rate must be between 0% and 100%.' };

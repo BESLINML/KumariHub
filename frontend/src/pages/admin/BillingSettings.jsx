@@ -3,6 +3,8 @@ import { adminFetch } from '../../utils/adminFetch';
 
 const initialSettings = {
   baseAmount: 168,
+  advertisement15DayAmount: 299,
+  advertisement30DayAmount: 499,
   gstRate: 0,
   sellerName: 'KumariHub',
   sellerGstin: '',
@@ -99,8 +101,8 @@ const BillingSettings = () => {
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#9a7526]">Admin settings</p>
-          <h1 className="mt-2 text-2xl font-bold text-[#1C1813] sm:text-3xl">Listing fee & invoice</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">Set the listing base price and seller details used for payment orders and emailed receipts.</p>
+          <h1 className="mt-2 text-2xl font-bold text-[#1C1813] sm:text-3xl">Listing, ad prices & invoices</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">Set listing and advertisement prices, GST, and the seller details used for payment orders and emailed receipts.</p>
         </div>
         <div className="flex gap-2">
           <button type="button" onClick={previewInvoice} disabled={previewLoading} className="rounded-xl border border-[#1A2E26] px-5 py-3 text-sm font-semibold text-[#1A2E26] transition hover:bg-[#f5f4f0] disabled:cursor-wait disabled:opacity-60">
@@ -124,6 +126,12 @@ const BillingSettings = () => {
             </label>
             <label className="text-sm font-medium text-gray-700">GST rate (%)
               <input className={fieldClass} name="gstRate" type="number" min="0" max="100" step="0.01" required value={settings.gstRate} onChange={updateField} />
+            </label>
+            <label className="text-sm font-medium text-gray-700">Advertisement price — 15 days (INR)
+              <input className={fieldClass} name="advertisement15DayAmount" type="number" min="1" max="1000000" step="0.01" required value={settings.advertisement15DayAmount} onChange={updateField} />
+            </label>
+            <label className="text-sm font-medium text-gray-700">Advertisement price — 30 days (INR)
+              <input className={fieldClass} name="advertisement30DayAmount" type="number" min="1" max="1000000" step="0.01" required value={settings.advertisement30DayAmount} onChange={updateField} />
             </label>
           </div>
           <div className="mt-4 rounded-xl bg-[#FCF7EF] p-4 text-sm text-[#51473a]">

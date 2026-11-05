@@ -42,14 +42,35 @@ async function sendReceiptOnce(order, paymentId, amountPaise) {
     return existing.rows[0]?.type === 'succeeded';
   }
   const customer = order.customer || {};
-  const details = order.businessDetails || {};
+  const isAdvertisement = Boolean(order.details && !order.businessDetails);
+  const details = isAdvertisement ? order.details : order.businessDetails || {};
+  const email = isAdvertisement ? details.email : customer.email;
+  if (!email) {
+    await pool.query('DELETE FROM payment_notifications WHERE "paymentId"=$1 AND type=\'succeeded\'', [paymentId]);
+    return false;
+  }
+  const adBaseAmountPaise = Number(order.baseAmountPaise || order.expectedAmountPaise || amountPaise);
+  const effectiveSettings = isAdvertisement && !order.settings
+    ? { ...order.settings, gstRate: 0 }
+    : order.settings;
+  const taxBreakdown = getChargeBreakdown(isAdvertisement
+    ? { ...effectiveSettings, baseAmount: adBaseAmountPaise / 100 }
+    : order.settings);
+  const purchaseDescription = isAdvertisement
+    ? `Advertisement placement (${order.durationDays} days)`
+    : 'Business listing fee';
+  const businessDetails = isAdvertisement ? {
+    category: details.category,
+    location: details.place,
+    phone: details.phone,
+    aboutBusness: details.description,
+  } : details;
   try {
     const sent = await sendBusinessPaymentReceipt({
-      email: customer.email, ownerName: customer.ownerName || details.ownerName,
-      businessName: details.businessName || customer.businessName, paymentId,
-      amount: amountPaise / 100, billingSettings: order.settings,
-      taxBreakdown: getChargeBreakdown(order.settings),
-      businessDetails: details,
+      email, ownerName: isAdvertisement ? details.ownerName : customer.ownerName || details.ownerName,
+      businessName: isAdvertisement ? details.companyName : details.businessName || customer.businessName,
+      paymentId, amount: amountPaise / 100, billingSettings: effectiveSettings,
+      taxBreakdown, businessDetails, purchaseDescription, isAdvertisement,
     });
     if (!sent) await pool.query('DELETE FROM payment_notifications WHERE "paymentId"=$1 AND type=\'succeeded\'', [paymentId]);
     return sent;
@@ -78,7 +99,7 @@ async function saveAdvertisementFromOrder(order, paymentId) {
   );
   if (!eligibility.rowCount) throw new Error('Advertisement business listing could not be verified.');
   const days = Number(order.durationDays);
-  const amount = Number(order.expectedAmountPaise) / 100;
+  const amount = Number(order.baseAmountPaise || order.expectedAmountPaise) / 100;
   const inserted = await pool.query(
     `INSERT INTO advertisements
       ("companyName", place, phone, category, "coverPhoto", description, "durationDays", amount, "paymentId", "expiresAt")
@@ -87,10 +108,17 @@ async function saveAdvertisementFromOrder(order, paymentId) {
     [String(details.companyName).trim(), String(details.place).trim(), normalizePhone(details.phone), String(details.category).trim(),
       String(details.coverPhoto), String(details.description).trim(), days, amount, paymentId],
   );
-  if (inserted.rowCount) return camelize(inserted.rows[0]);
-  const existing = await pool.query('SELECT * FROM advertisements WHERE "paymentId"=$1', [paymentId]);
-  if (!existing.rowCount) throw new Error('Could not save the paid advertisement.');
-  return camelize(existing.rows[0]);
+  let advertisement;
+  if (inserted.rowCount) advertisement = camelize(inserted.rows[0]);
+  else {
+    const existing = await pool.query('SELECT * FROM advertisements WHERE "paymentId"=$1', [paymentId]);
+    if (!existing.rowCount) throw new Error('Could not save the paid advertisement.');
+    advertisement = camelize(existing.rows[0]);
+  }
+  const receiptEmailSent = order.details?.email
+    ? await sendReceiptOnce(order, paymentId, Number(order.expectedAmountPaise))
+    : false;
+  return { advertisement, receiptEmailSent };
 }
 
 async function recoverCapturedPayment(payment) {

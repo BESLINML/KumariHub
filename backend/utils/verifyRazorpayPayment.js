@@ -1,7 +1,7 @@
 const crypto = require('node:crypto');
 const Razorpay = require('razorpay');
 const { pool } = require('../db');
-const { getChargeBreakdown } = require('./billingSettings');
+const { DEFAULT_BILLING_SETTINGS, getChargeBreakdown } = require('./billingSettings');
 
 const verifyRazorpayPayment = async (req, res, next) => {
   const { razorpay_order_id: orderId, razorpay_payment_id: paymentId, razorpay_signature: signature } = req.body || {};
@@ -34,10 +34,14 @@ const verifyRazorpayPayment = async (req, res, next) => {
       expectedAmountPaise = Number(billingOrder.expectedAmountPaise);
     } else {
       const adOrder = (await pool.query(
-        'SELECT "expectedAmountPaise", "durationDays", details FROM advertisement_orders WHERE "orderId"=$1', [orderId],
+        'SELECT "expectedAmountPaise", "durationDays", details, "baseAmountPaise", settings FROM advertisement_orders WHERE "orderId"=$1', [orderId],
       )).rows[0];
       if (!adOrder) return res.status(400).json({ error: 'Advertisement payment order was not found. Please start a new payment.' });
       req.verifiedAdvertisementOrder = adOrder;
+      req.verifiedBillingSettings = adOrder.settings || { ...DEFAULT_BILLING_SETTINGS, gstRate: 0 };
+      req.verifiedAdvertisementTaxBreakdown = adOrder.baseAmountPaise
+        ? getChargeBreakdown({ ...req.verifiedBillingSettings, baseAmount: Number(adOrder.baseAmountPaise) / 100 })
+        : { basePaise: Number(adOrder.expectedAmountPaise), taxPaise: 0, totalPaise: Number(adOrder.expectedAmountPaise) };
       expectedAmountPaise = Number(adOrder.expectedAmountPaise);
       if (Number(req.body.durationDays) !== Number(adOrder.durationDays)) {
         return res.status(400).json({ error: 'Payment does not match the selected advertisement plan.' });

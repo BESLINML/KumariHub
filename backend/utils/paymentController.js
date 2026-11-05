@@ -13,19 +13,32 @@ const createOrder = async (req, res) => {
     }
 
     const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
-    const planPrices = { 15: 299, 30: 499 };
     const durationDays = Number(req.body?.durationDays);
     let amountPaise;
     let billingSettings = null;
     let advertisementDetails = null;
     let businessDetails = null;
+    let advertisementBaseAmountPaise = 0;
     if (durationDays) {
-      const amountRupees = planPrices[durationDays];
+      billingSettings = await loadBillingSettings(pool);
+      const amountRupees = durationDays === 15
+        ? billingSettings.advertisement15DayAmount
+        : durationDays === 30 ? billingSettings.advertisement30DayAmount : 0;
       if (!amountRupees) return res.status(400).json({ error: 'Choose a valid plan: 15 days or 30 days.' });
-      amountPaise = amountRupees * 100;
+      if (billingSettings.gstRate > 0 && !billingSettings.sellerGstin) {
+        return res.status(503).json({ error: 'Enter the seller GSTIN in admin billing settings before accepting GST payments.' });
+      }
+      const priceBreakdown = getChargeBreakdown({ ...billingSettings, baseAmount: amountRupees });
+      advertisementBaseAmountPaise = priceBreakdown.basePaise;
+      amountPaise = priceBreakdown.totalPaise;
       advertisementDetails = req.body?.advertisementDetails || {};
       if (['companyName', 'place', 'phone', 'category', 'coverPhoto', 'description'].some((field) => !String(advertisementDetails[field] || '').trim())) {
         return res.status(400).json({ error: 'Complete the advertisement details before starting payment.' });
+      }
+      advertisementDetails.email = String(advertisementDetails.email || '').trim().toLowerCase();
+      advertisementDetails.ownerName = String(advertisementDetails.ownerName || '').trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(advertisementDetails.email)) {
+        return res.status(400).json({ error: 'A valid customer email is required for the advertisement invoice.' });
       }
     } else {
       const customer = {
@@ -56,15 +69,15 @@ const createOrder = async (req, res) => {
       receipt: "receipt_" + Date.now()
     };
     const order = await razorpay.orders.create(options);
-    if (billingSettings) {
+    if (durationDays) {
       await pool.query(
-        'INSERT INTO billing_orders ("orderId", settings, "expectedAmountPaise", customer, "businessDetails") VALUES ($1, $2::jsonb, $3, $4::jsonb, $5::jsonb)',
-        [order.id, JSON.stringify(billingSettings), amountPaise, JSON.stringify(req.paymentCustomer), JSON.stringify(businessDetails)],
+        'INSERT INTO advertisement_orders ("orderId", "expectedAmountPaise", "durationDays", details, "baseAmountPaise", settings) VALUES ($1, $2, $3, $4::jsonb, $5, $6::jsonb)',
+        [order.id, amountPaise, durationDays, JSON.stringify(advertisementDetails), advertisementBaseAmountPaise, JSON.stringify(billingSettings)],
       );
     } else {
       await pool.query(
-        'INSERT INTO advertisement_orders ("orderId", "expectedAmountPaise", "durationDays", details) VALUES ($1, $2, $3, $4::jsonb)',
-        [order.id, amountPaise, durationDays, JSON.stringify(advertisementDetails)],
+        'INSERT INTO billing_orders ("orderId", settings, "expectedAmountPaise", customer, "businessDetails") VALUES ($1, $2::jsonb, $3, $4::jsonb, $5::jsonb)',
+        [order.id, JSON.stringify(billingSettings), amountPaise, JSON.stringify(req.paymentCustomer), JSON.stringify(businessDetails)],
       );
     }
     res.json({ ...order, keyId });
@@ -78,6 +91,26 @@ const createOrder = async (req, res) => {
       ? 'Razorpay rejected the API credentials. Confirm the live Key ID and Key Secret belong to the same Razorpay account.'
       : description || 'Razorpay could not create the order. Check the backend logs for the provider error.';
     res.status(502).json({ error: message, code });
+  }
+};
+
+const getPricing = async (_req, res) => {
+  try {
+    const settings = await loadBillingSettings(pool);
+    const plans = [15, 30].map((days) => {
+      const baseAmount = Number(days === 15 ? settings.advertisement15DayAmount : settings.advertisement30DayAmount);
+      const amounts = getChargeBreakdown({ ...settings, baseAmount });
+      return {
+        days,
+        baseAmount: amounts.basePaise / 100,
+        gstAmount: amounts.taxPaise / 100,
+        totalAmount: amounts.totalPaise / 100,
+      };
+    });
+    res.json({ advertisementPlans: plans, gstRate: Number(settings.gstRate || 0) });
+  } catch (error) {
+    console.error('Could not load payment pricing:', error.message);
+    res.status(500).json({ error: 'Could not load current advertisement prices.' });
   }
 };
 
@@ -182,4 +215,4 @@ const handleRazorpayWebhook = async (req, res) => {
   }
 };
 
-module.exports = { createOrder, notifyPaymentFailure, handleRazorpayWebhook };
+module.exports = { createOrder, getPricing, notifyPaymentFailure, handleRazorpayWebhook };
