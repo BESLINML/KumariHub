@@ -16,6 +16,7 @@ import Other from './pages/admin/Other'
 import BillingSettings from './pages/admin/BillingSettings'
 import CategoryPage from './pages/CategoryPage'
 import CategoryLocationPage from './pages/CategoryLocationPage'
+import LocationPage from './pages/LocationPage'
 
 const App = () => {
   return (
@@ -24,6 +25,7 @@ const App = () => {
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<Home />} />
+            <Route path="/location/:locationSlug" element={<LocationPage />} />
             <Route path="/:categorySlug" element={<CategoryPage />} />
             <Route path="/:categorySlug/:locationSlug" element={<CategoryLocationPage />} />
             <Route path="/:category/:location/:businessName" element={<UserBusinessProfile />} />

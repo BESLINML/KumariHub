@@ -1,48 +1,42 @@
- const BusinessSEO = ({ business }) => {
+import PageSEO from './PageSEO';
+
+const slug = (value = '') => String(value).toLowerCase().trim()
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+const BusinessSEO = ({ business }) => {
   if (!business) return null;
 
-  const currentUrl = window.location.href;
-  const createSlug = (str) => str ? str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : '';
-
-  const schemaData = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": business.businessName,
-    "image": business.img,
-    "telephone": business.phone,
-    "address": {
-      "@type": "PostalAddress",
-      "addressLocality": business.location,
-      "addressCountry": "IN"
+  const path = `/${slug(business.category)}/${slug(business.location)}/${slug(business.businessName)}`;
+  const title = `${business.businessName} | ${business.category} in ${business.location} | KumariHUB`;
+  const description = `${business.businessName} is a ${business.category} in ${business.location}, Kanyakumari. View contact details, address, services, opening times and customer reviews on KumariHUB.`;
+  const image = /^https?:\/\//i.test(String(business.img || '')) ? business.img : undefined;
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    '@id': `https://kumarihub-8592a.web.app${path}#business`,
+    name: business.businessName,
+    description: business.aboutBusness || description,
+    image: image ? [image] : undefined,
+    url: `https://kumarihub-8592a.web.app${path}`,
+    telephone: business.phone || undefined,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: business.address || undefined,
+      addressLocality: business.location || undefined,
+      addressRegion: 'Tamil Nadu',
+      addressCountry: 'IN',
     },
-    "url": currentUrl
+    ...(business.locationLink ? { hasMap: business.locationLink } : {}),
+    ...(Number(business.reviewCount) > 0 && Number(business.avgRating) > 0 ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: Number(business.avgRating),
+        reviewCount: Number(business.reviewCount),
+      },
+    } : {}),
   };
 
-  return (
-    <>
-      <title>{`${business.businessName} | ${business.category} in ${business.location} | KumariHUB`}</title>
-      <meta name="description" content={`Find ${business.businessName} in ${business.location}. View phone number, WhatsApp, address, timings, photos and reviews on KumariHUB.`} />
-
-
-      <link rel="canonical" href={currentUrl} />
-
-
-      <meta property="og:type" content="website" />
-      <meta property="og:url" content={currentUrl} />
-      <meta property="og:title" content={`${business.businessName} | KumariHUB`} />
-      <meta property="og:description" content={`Discover trusted local businesses like ${business.businessName} in ${business.location} on KumariHUB.`} />
-      <meta property="og:image" content={business.img} />
-
-
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={`${business.businessName} | KumariHUB`} />
-      <meta name="twitter:image" content={business.img} />
-
-
-      <script type="application/ld+json">
-        {JSON.stringify(schemaData)}
-      </script>
-    </>
-  );
+  return <PageSEO title={title} description={description} path={path} image={image} noIndex={business.status !== 'active'} schema={schema} />;
 };
+
 export default BusinessSEO;

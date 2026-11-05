@@ -2,6 +2,10 @@ import { LucideLollipop, MapPin, Phone, Star, Store, Tag, Timer } from 'lucide-r
 import React from 'react'
 import whatsapp from "../assets/svg/whatsapp.svg"
 
+const toBusinessSlug = (value = '') => String(value).toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
 const BusinessCard = ({
     img,
     categories,
@@ -68,22 +72,17 @@ const BusinessCard = ({
             <div
                 className={`bg-white rounded-4xl shadow-sm border border-gray-100 overflow-hidden hover:-translate-y-2 hover:border-[#DBA55C] hover:shadow-2xl duration-500 transition-all ${onclick ? 'cursor-pointer' : ''}`}
                 onClick={onclick}
-                onKeyDown={onclick ? (event) => {
-                    if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
-                        event.preventDefault();
-                        onclick();
-                    }
-                } : undefined}
-                role={onclick ? 'link' : undefined}
-                tabIndex={onclick ? 0 : undefined}
-                aria-label={onclick ? `View details for ${bussinessName}` : undefined}
             >
 
                 {/* Image & Tags Section */}
                 <div className="relative h-40 overflow-hidden">
                     <img
                         src={img || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=400"}
-                        alt={bussinessName || "Business Image"}
+                        alt={`${bussinessName || 'Local business'}${categories ? `, ${categories}` : ''}${location ? ` in ${location}` : ''}`}
+                        loading="lazy"
+                        decoding="async"
+                        width="800"
+                        height="600"
                         className="rounded-t-4xl w-full h-full object-cover object-center"
                     />
                     <p className="absolute bottom-3 left-3 flex items-center gap-1.5 bg-[#424345] text-[#F5E1B0] text-xs font-medium rounded-full px-2.5 py-0.5 shadow-md">
@@ -101,15 +100,19 @@ const BusinessCard = ({
                     <div>
                         <div className="flex items-center gap-2 mb-1">
                             <Store className="w-5 h-5 text-[#DBA55C] shrink-0" />
-                            <button
+                            <a
+                                href={`/${toBusinessSlug(categories)}/${toBusinessSlug(location)}/${toBusinessSlug(bussinessName)}`}
                                 onClick={(event) => {
                                     event.stopPropagation();
-                                    onclick?.();
+                                    if (onclick) {
+                                        event.preventDefault();
+                                        onclick();
+                                    }
                                 }}
                                 className="text-lg font-[650] text-gray-800 hover:text-[#DBA55C] cursor-pointer text-left truncate "
                             >
                                 {bussinessName}
-                            </button>
+                            </a>
                         </div>
 
                         <div className="flex items-center gap-1.5 mt-1">

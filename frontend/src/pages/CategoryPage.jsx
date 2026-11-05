@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import BusinessCard from '../components/BusinessCard';
+import PageSEO from '../components/PageSEO';
+import { seoSlug, titleCaseSlug } from '../utils/seo';
 
 const CategoryPage = () => {
   const { categorySlug } = useParams();
@@ -9,11 +11,7 @@ const CategoryPage = () => {
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const formatOriginalText = (slug) => {
-    return slug ? slug.replace(/-/g, ' ') : '';
-  };
-
-  const categoryName = formatOriginalText(categorySlug);
+  const categoryName = titleCaseSlug(categorySlug);
 
   useEffect(() => {
     const fetchCategoryBusinesses = async () => {
@@ -37,12 +35,10 @@ const CategoryPage = () => {
     }
   }, [categoryName, API_URL]);
 
-  const formatSlug = (text) => text ? text.toLowerCase().replace(/\s+/g, '-') : '';
-
   const handleCardClick = (business) => {
-    const categorySlug = formatSlug(business.category);
-    const locationSlug = formatSlug(business.location);
-    const nameSlug = formatSlug(business.businessName);
+    const categorySlug = seoSlug(business.category);
+    const locationSlug = seoSlug(business.location);
+    const nameSlug = seoSlug(business.businessName);
     const url = `/${categorySlug}/${locationSlug}/${nameSlug}`;
     window.open(url, '_blank');
 
@@ -50,6 +46,12 @@ const CategoryPage = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
+      <PageSEO
+        title={`${categoryName} in Kanyakumari | KumariHUB`}
+        description={`Find trusted ${categoryName.toLowerCase()} businesses in Kanyakumari district. Compare local listings, contact details, locations and customer reviews on KumariHUB.`}
+        path={`/${seoSlug(categorySlug)}`}
+        schema={{ '@context': 'https://schema.org', '@type': 'CollectionPage', name: `${categoryName} in Kanyakumari`, url: `https://kumarihub-8592a.web.app/${seoSlug(categorySlug)}` }}
+      />
       <h1 className="text-3xl font-serif font-bold capitalize mb-2">{categoryName} Businesses</h1>
       <p className="text-gray-500 mb-8">Showing all active {categoryName} in Kanyakumari</p>
 

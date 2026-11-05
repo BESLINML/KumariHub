@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin-dashboard
+Disallow: /admin-dashBoard
+
+Sitemap: https://kumarihub-8592a.web.app/sitemap.xml

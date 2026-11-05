@@ -6,7 +6,9 @@ import NavBar from '../components/NavBar.jsx';
 import { useNavigate, Link } from 'react-router-dom';
 import SearchBox from '../components/SearchBox.jsx';
 import PopularCategories from '../components/PopularCategories.jsx';
-import fallbackBusinessImage from '../assets/avif/pexels-photo-1954524.avif';
+import fallbackBusinessImage from '../assets/avif/kanyakumari-featured-local-business.avif';
+import PageSEO from '../components/PageSEO';
+import { seoSlug } from '../utils/seo';
 
 const Home = ({ searchTerm, setSearchTerm }) => {
   const API_URL = import.meta.env.VITE_API_URL;
@@ -235,12 +237,10 @@ const Home = ({ searchTerm, setSearchTerm }) => {
 
   const displayedBusinesses = filteredBusinesses.slice(0, visibleCount);
 
-  const formatSlug = (text) => text ? text.toLowerCase().replace(/\s+/g, '-') : '';
-
   const handleCardClick = (business) => {
-    const categorySlug = formatSlug(business.category);
-    const locationSlug = formatSlug(business.location);
-    const nameSlug = formatSlug(business.businessName);
+    const categorySlug = seoSlug(business.category);
+    const locationSlug = seoSlug(business.location);
+    const nameSlug = seoSlug(business.businessName);
     const url = `/${categorySlug}/${locationSlug}/${nameSlug}`;
     window.open(url, '_blank');
 
@@ -271,12 +271,24 @@ const Home = ({ searchTerm, setSearchTerm }) => {
       }
     }
     const business = matchingBusiness || advertisement;
-    const slug = (value) => value ? value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') : '';
-    navigate(`/${slug(business.category)}/${slug(business.location || business.place)}/${slug(business.businessName || business.companyName)}`);
+    navigate(`/${seoSlug(business.category)}/${seoSlug(business.location || business.place)}/${seoSlug(business.businessName || business.companyName)}`);
   };
 
   return (
     <div className="overflow-x-hidden">
+      <PageSEO
+        title="KumariHUB | Find Local Businesses in Kanyakumari"
+        description="Discover trusted restaurants, shops, salons, home services and more in Nagercoil and across Kanyakumari district. Find contact details, directions and reviews."
+        path="/"
+        schema={{
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          name: 'KumariHUB',
+          url: 'https://kumarihub-8592a.web.app/',
+          description: 'A local business directory for Kanyakumari district, Tamil Nadu, India.',
+          inLanguage: 'en-IN',
+        }}
+      />
       <NavBar
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
@@ -329,7 +341,7 @@ const Home = ({ searchTerm, setSearchTerm }) => {
                 }}
                 className="w-full md:w-[70%] text-white flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5 transition-all duration-300 overflow-hidden text-center sm:text-left cursor-pointer rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
               >
-                <img src={currentAdvertisement.coverPhoto || fallbackBusinessImage} alt={currentAdvertisement.companyName || 'Advertisement'} className="w-32 h-28 sm:w-44 sm:h-36 object-cover object-center rounded-2xl shrink-0" />
+                <img src={currentAdvertisement.coverPhoto || fallbackBusinessImage} alt={`${currentAdvertisement.companyName || 'Featured business'} advertisement in ${currentAdvertisement.place || 'Kanyakumari'}`} loading="lazy" decoding="async" width="640" height="480" className="w-32 h-28 sm:w-44 sm:h-36 object-cover object-center rounded-2xl shrink-0" />
                 <div className="space-y-2 w-full min-w-0">
                   <p className="text-[#DBA55C] text-xs uppercase tracking-widest">Featured Advertisement</p>
                   <h2 className="text-xl sm:text-3xl font-bold font-serif truncate">{currentAdvertisement.companyName}</h2>

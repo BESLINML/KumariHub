@@ -7,6 +7,7 @@ import {
 import BusinessSEO from './BusinessSEO';
 import ListYourBusinessButton from './ListYourBusinessButton';
 import whatsappIcon from '../assets/svg/whatsapp.svg';
+import { seoSlug } from '../utils/seo';
 
 export default function UserBusinessProfile() {
   const { category, location, businessName } = useParams();
@@ -105,8 +106,6 @@ export default function UserBusinessProfile() {
     ? (reviews.reduce((acc, item) => acc + item.rating, 0) / totalReviewsCount).toFixed(1)
     : (business.avgRating || '5.0');
 
-  const formatSlug = (text) => text ? text.toLowerCase().replace(/\s+/g, '-') : '';
-
   return (
     <div className="bg-[#f4f5f7] min-h-screen py-8 font-sans">
       <BusinessSEO business={business}/>
@@ -120,7 +119,9 @@ export default function UserBusinessProfile() {
             <div className="relative h-72 sm:h-80 w-full bg-white">
               <img
                 src={business.img || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=1000"}
-                alt={business.businessName}
+                alt={`${business.businessName} ${business.category} in ${business.location}`}
+                decoding="async"
+                fetchPriority="high"
                 className="w-full h-full object-cover"
               />
 
@@ -157,7 +158,9 @@ export default function UserBusinessProfile() {
                   <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl bg-white p-1 shadow-lg border-4 border-[#DBA55C] shrink-0 overflow-hidden flex items-center justify-center">
                     <img
                       src={business.img || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=300"}
-                      alt="Logo"
+                      alt={`${business.businessName} logo`}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover rounded-xl"
                     />
                   </div>
@@ -372,13 +375,15 @@ export default function UserBusinessProfile() {
                 relatedBusinesses.map((item) => (
                   <Link
                     key={item._id}
-                    to={`/${formatSlug(item.category)}/${formatSlug(item.location)}/${formatSlug(item.businessName)}`}
+                    to={`/${seoSlug(item.category)}/${seoSlug(item.location)}/${seoSlug(item.businessName)}`}
                     className="flex items-center justify-between p-2 rounded-xl hover:bg-gray-50 transition border border-transparent hover:border-gray-200"
                   >
                     <div className="flex items-center gap-3">
                       <img
                         src={item.img || "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=200"}
-                        alt={item.businessName}
+                        alt={`${item.businessName} ${item.category} in ${item.location}`}
+                        loading="lazy"
+                        decoding="async"
                         className="w-12 h-12 object-cover rounded-lg shrink-0"
                       />
                       <div className="min-w-0">

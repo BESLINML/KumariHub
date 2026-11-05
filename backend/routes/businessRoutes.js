@@ -7,7 +7,7 @@ const { completeBusinessOrder } = require('../utils/paidSubmissionRecovery');
 const authenticateAdmin = require('../utils/adminAuth');
 const businessFields = ['ownerName','email','businessName','category','address','location','phone','whatsapp','services','aboutBusness','img','timing','locationLink','delivery','status','premium','avgRating','reviewCount','expiryDate','paymentId'];
 const slug = (value='') => decodeURIComponent(value).replace(/[-_]/g, ' ').trim();
-const pattern = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '[\\s-]+');
+const pattern = (value) => value.split(/\s+/).map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('[[:punct:][:space:]_-]+');
 const findBusiness = async (category, location, name) => {
   const result = await pool.query('SELECT * FROM businesses WHERE BTRIM(category) ~* $1 AND BTRIM(location) ~* $2 AND BTRIM("businessName") ~* $3 LIMIT 1', [`^${pattern(category)}$`, `^${pattern(location)}$`, `^${pattern(name)}$`]);
   return camelize(result.rows[0]);
